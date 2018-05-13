@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
 
-  s.name         = "RTDB"
+  s.name         = "RTDatabase"
   s.version      = "0.0.1"
   s.summary      = "A Library for iOS to use for sqlite"
   s.homepage     = "https://github.com/FuihuiC"
@@ -14,6 +14,6 @@ Pod::Spec.new do |s|
   
   s.license = "MIT"
 
-  s.source_files        = 'RTDatabase/*.h', 'RTDatabase/core/*.{h,m}'
-  s.public_header_files = 'RTDatabase/*.h', 'RTDatabase/core/*.{h}'
+  s.source_files        = 'RTDatabase/RTDatabase.h', 'RTDatabase/core/*.{h,m}'
+  s.public_header_files = 'RTDatabase/RTDatabase.h', 'RTDatabase/core/*.{h}'
 end

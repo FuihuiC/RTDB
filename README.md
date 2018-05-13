@@ -6,7 +6,7 @@
 
 #### Installation with CocoaPods
 ```
-pod 'RTDB'
+pod 'RTDatabase'
 ```
 #### Installation by cloning the repository
 
