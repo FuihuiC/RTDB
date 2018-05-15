@@ -57,6 +57,7 @@ typedef void(^rt_select_block_t)(NSArray *);
 
 @interface RTSyncRun : NSObject
 #pragma mark Usual
+- (void)threadLock:(rt_block_t)block;
 - (RTSyncRun *(^)(dispatch_queue_t))onQueue;
 - (RTSyncRun *)onMain;
 - (RTSyncRun *(^)(rt_block_t))onWorkQueue;

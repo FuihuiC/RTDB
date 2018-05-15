@@ -165,6 +165,14 @@
 }
 
 #pragma mark method
+- (void)threadLock:(rt_block_t)block {
+    if (!block) return;
+    
+    self.onWorkQueue(^(){
+        [self lock:block];
+    });
+}
+
 // goto synchronize
 - (void)lock:(rt_block_t)block {
     [RTDB sharedInstance].onSync.lock(block);
