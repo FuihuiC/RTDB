@@ -27,6 +27,8 @@ static rt_objc_t rt_object_type(rt_char_t *attr);
  */
 static rt_char_t *rt_sqlite3_bind_type(rt_char_t c);
 
+static BOOL rt_confirm_class_pro_id(Class cls);
+
 /**
  获取需要建表的类的信息
 
@@ -178,7 +180,21 @@ static rt_char_t *rt_sqlite3_bind_type(rt_char_t t) {
     }
 }
 
-
+static BOOL rt_confirm_class_pro_id(Class cls) {
+    if (cls == Nil) {
+        return NO;
+    } else {
+        Class superCls = class_getSuperclass(cls);
+        if (superCls != Nil) {
+            objc_property_t super_id = class_getProperty(superCls, "_id");
+            if (super_id != NULL) {
+                return YES;
+            } else {
+                return rt_confirm_class_pro_id(superCls);
+            }
+        } else return NO;
+    }
+}
 
 static void rt_class_info(Class cls, BOOL *has_id, char **className, rt_pro_info_p *proInfos, char **creat, char **insert, char **update, char **delete) {
     
@@ -216,7 +232,7 @@ static void rt_class_info(Class cls, BOOL *has_id, char **className, rt_pro_info
             }
             
             // pro info
-            rt_pro_info *next = rt_make_info(i, t, cn);
+            rt_pro_info *next = rt_make_info(i + 1, t, cn);
             // sql
             rt_info_append(&infos, next);
             
@@ -243,6 +259,10 @@ static void rt_class_info(Class cls, BOOL *has_id, char **className, rt_pro_info
             // update
             rt_char_t *update_end = end ? "=?" : "=?, ";
             rt_str_append(&updates, 2, cn, update_end);
+        }
+        
+        if (*has_id == NO) {
+            *has_id = rt_confirm_class_pro_id(cls);
         }
 
         char *creatSql = NULL; // CREATE

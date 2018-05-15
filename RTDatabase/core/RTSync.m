@@ -478,12 +478,12 @@
             self.err = error;
             return self;
         } else return self.onWorkQueue(^() {
-            
+            b([self selectObjs:sql]);
         });
     };
 }
 
-- (NSArray <NSDictionary *>*)selectObjs:(NSString *)sql {
+- (NSArray *)selectObjs:(NSString *)sql {
     __block NSArray <NSDictionary *>* results;
     [self lock:^{
         NSError *err;
