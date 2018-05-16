@@ -281,7 +281,7 @@ typedef enum : NSUInteger {
     }
     // free
     rt_sqlite3_finalize(&stmt);
-    rt_free_info(&proInfo);
+    rt_free_info(proInfo);
     return (result != RT_SQLITE_ERROR);
 }
 

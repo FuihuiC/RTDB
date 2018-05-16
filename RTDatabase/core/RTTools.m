@@ -220,15 +220,11 @@ int rt_pro_t_assign(rt_pro_info *infos1, rt_pro_info_p *infos2, char **errMsg) {
     return 1;
 }
 
-void rt_free_info(rt_pro_info_p *infos) {
-    
+void rt_free_info(rt_pro_info *infos) {
     if (infos == NULL) return;
     
-    if ((*infos)->next != NULL) {
-        rt_free_info(&((*infos)->next));
-    }
+    rt_free_info(infos->next);
     
-    free(*infos);
-    (*infos)->name = 0x00;
-    *infos = 0x00;
+    free(infos);
+    infos = 0x00;
 }

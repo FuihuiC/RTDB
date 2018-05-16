@@ -130,6 +130,6 @@ RT_EXTERN void rt_enum_info(
 RT_EXTERN int rt_pro_t_assign(rt_pro_info *infos1, rt_pro_info_p *infos2, char **errMsg);
 
 /** free Singly Linked List */
-RT_EXTERN void rt_free_info(rt_pro_info_p *infos);
+RT_EXTERN void rt_free_info(rt_pro_info *infos);
 
 #endif /* RTPreset_h */

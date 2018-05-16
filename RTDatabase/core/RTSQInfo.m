@@ -1,4 +1,4 @@
- //
+//
 //  RTSQInfo.m
 //  RTSQLite
 //
@@ -13,7 +13,7 @@
 #pragma mark - private interface
 /**
  获取property类型
-
+ 
  @param attr runtime 获取的 property attribute
  @return 类型 (rt_char_t)
  */
@@ -21,7 +21,7 @@ static rt_objc_t rt_object_type(rt_char_t *attr);
 
 /**
  根据property类型 获取 bind 类型
-
+ 
  @param c property类型
  @return bind 类型
  */
@@ -31,7 +31,7 @@ static BOOL rt_confirm_class_pro_id(Class cls);
 
 /**
  获取需要建表的类的信息
-
+ 
  @param cls 需要建表的类
  @param className 类名
  @param proInfos 属性信息
@@ -196,101 +196,153 @@ static BOOL rt_confirm_class_pro_id(Class cls) {
     }
 }
 
+static void rt_free(void *src) {
+    if (src == NULL) return;
+    free(src);
+    src = 0x00;
+}
+
 static void rt_class_info(Class cls, BOOL *has_id, char **className, rt_pro_info_p *proInfos, char **creat, char **insert, char **update, char **delete) {
     
     rt_char_t *clsName = class_getName(cls);
-   
+    
     unsigned int outCount;
     objc_property_t *proList = class_copyPropertyList(cls, &outCount);
+    if (outCount == 0) {
+        free(proList);
+        return;
+    }
     
-    if (outCount > 0) {
+    rt_char_t *insert_pros[outCount + 1];
+    rt_char_t *creat_pros_ts[outCount + 1];
+    rt_char_t *update_pros[outCount + 1];
+    
+    rt_pro_info *infos = NULL;
+    
+    int columnIdx = 0;
+    for (int i = 0; i < outCount; i++) {
+        objc_property_t pro = proList[i];
         
-        char *props   = NULL;
-        props = rt_strcat(props, " (");
-        char *values  = NULL;
-        values = rt_strcat(values, "VALUES (");
-        char *updates = NULL;
-        char *creats  = NULL;
+        rt_char_t *cn = property_getName(pro);
         
-        rt_pro_info *infos = NULL;
-        for (int i = 0; i < outCount; i++) {
-            objc_property_t pro = proList[i];
-            
-            rt_char_t *cn = property_getName(pro);
-            
-            if (strlen(cn) == 0) continue;
-
-            rt_objc_t t = rt_object_type(property_getAttributes(pro));
-            if (t == 0) continue; // unkown type
-            
-            // sql bind type
-            rt_char_t *bindT = rt_sqlite3_bind_type(t);
-            
-            if ((strcmp(cn, "_id") == 0) && (strcmp(bindT, "INTEGER") == 0)) {
+        if (strlen(cn) == 0) continue;
+        
+        rt_objc_t t = rt_object_type(property_getAttributes(pro));
+        if (t == 0) continue; // unkown type
+        
+        // sql bind type
+        rt_char_t *bindT = rt_sqlite3_bind_type(t);
+        
+        if ((strcmp(cn, "_id") == 0) && (strcmp(bindT, "INTEGER") == 0)) {
+            if (has_id != NULL) {
                 *has_id = YES;
-                continue;
             }
-            
-            // pro info
-            rt_pro_info *next = rt_make_info(i + 1, t, cn);
-            // sql
-            rt_info_append(&infos, next);
-            
-            bool end = (i == (outCount - 1));
-            
-            // creat
-            rt_char_t *creat_end = end ? "')" : "', ";
-            rt_str_append(&creats, 6,
-                          "'",
-                          cn,
-                          "' ",
-                          "'",
-                          bindT,
-                          creat_end);
-            
-            // insert
-            // pros
-            rt_char_t *p = end ? ") " : ", ";
-            rt_str_append(&props, 2, cn, p);
-            // values
-            rt_char_t *v = end ? "?)" : "?, ";
-            values = rt_strcat(values, (char *)v);
-            
-            // update
-            rt_char_t *update_end = end ? "=?" : "=?, ";
-            rt_str_append(&updates, 2, cn, update_end);
+            continue;
         }
         
-        if (*has_id == NO) {
-            *has_id = rt_confirm_class_pro_id(cls);
-        }
-
-        char *creatSql = NULL; // CREATE
-        rt_str_append(&creatSql, 4,
-                      "CREATE TABLE if not exists '",
-                      clsName,
-                      "' ('_id' integer primary key autoincrement not null, ",
-                      creats);
-        free(creats);
+        // pro info
+        rt_pro_info *next = rt_make_info(columnIdx + 1, t, cn);
+        // sql
+        rt_info_append(&infos, next);
         
-        char *insertSql = NULL; // INSERT
-        rt_str_append(&insertSql, 4, "INSERT INTO ", clsName, props, values);
-        free(props);
-        free(values);
         
-        char *updateSql = NULL; // UPDATE
-        rt_str_append(&updateSql, 5, "UPDATE ", clsName, " SET ", updates, " WHERE _id = ");
-        free(updates);
+        char *pro_t = NULL;
+        rt_str_append(&pro_t, 5, "'", cn, "' '", bindT, "'");
+        creat_pros_ts[columnIdx] = pro_t;
         
-        char *dstr = NULL; // DELETE
-        rt_str_append(&dstr, 3, "DELETE FROM ", clsName, " WHERE _id = ");
+        insert_pros[columnIdx] = cn;
         
+        char *pro_v = NULL;
+        rt_str_append(&pro_v, 2, cn, " = ?");
+        update_pros[columnIdx] = pro_v;
+        
+        columnIdx++;
+    }
+    free(proList);
+    
+    if (columnIdx == 0) { return; }
+    
+    creat_pros_ts[columnIdx] = NULL;
+    insert_pros[columnIdx] = NULL;
+    update_pros[columnIdx] = NULL;
+    
+    
+    char *creatSql = NULL; // CREATE
+    rt_str_append(&creatSql, 3, "CREATE TABLE if not exists '", clsName, "' ('_id' integer primary key autoincrement not null");
+    
+    char *insertSql = NULL; // INSERT
+    rt_str_append(&insertSql, 3, "INSERT INTO ", clsName, "(");
+    char *insert_ps = NULL;
+    char *insert_vs = NULL;
+    
+    char *updateSql = NULL; // UPDATE
+    rt_str_append(&updateSql, 3, "UPDATE ", clsName, " SET ");
+    
+    for (int i = 0; i < columnIdx; i++) {
+        rt_char_t *pro_t = creat_pros_ts[i];
+        rt_str_append(&creatSql, 2, ", ", creat_pros_ts[i]);
+        rt_free((void *)pro_t);
+        
+        BOOL end = (i == columnIdx - 1);
+        
+        rt_char_t *i_pro = insert_pros[i];
+        rt_char_t *suffix = end ? ")" : ", ";
+        rt_str_append(&insert_ps, 2, i_pro, suffix);
+        rt_str_append(&insert_vs, 3, ":", i_pro, suffix);
+        
+        rt_char_t *update_pv = update_pros[i];
+        rt_str_append(&updateSql, 2, update_pv, end ? "" :", ");
+        rt_free((void *)update_pv);
+    }
+    
+    rt_str_append(&creatSql, 1, ")");
+    
+    rt_str_append(&insertSql, 3, insert_ps, "VALUES (", insert_vs);
+    rt_free((void *)insert_ps);
+    rt_free((void *)insert_vs);
+    
+    rt_str_append(&updateSql, 1, " WHERE _id = ");
+    
+    char *dstr = NULL; // DELETE
+    rt_str_append(&dstr, 3, "DELETE FROM ", clsName, " WHERE _id = ");
+    
+    
+    if (has_id != NULL && *has_id == NO) {
+        *has_id = rt_confirm_class_pro_id(cls);
+    }
+    
+    if (className != NULL) {
         *className = (char *)clsName;
+    }
+    
+    if (proInfos != NULL) {
         *proInfos = infos;
+    } else {
+        rt_free_info(infos);
+    }
+    
+    if (creat != NULL) {
         *creat = creatSql;
+    } else {
+        rt_free((void **)&creatSql);
+    }
+    
+    if (insert != NULL) {
         *insert = insertSql;
+    } else {
+        rt_free((void **)&insertSql);
+    }
+    
+    if (update != NULL) {
         *update = updateSql;
+    } else {
+        rt_free((void **)&updateSql);
+    }
+    
+    if (delete != NULL) {
         *delete = dstr;
+    } else {
+        rt_free((void **)&dstr);
     }
 }
 
@@ -330,7 +382,7 @@ static void rt_class_info(Class cls, BOOL *has_id, char **className, rt_pro_info
 
 - (void)dealloc {
     if (_prosInfo != NULL) {
-        rt_free_info(&_prosInfo);
+        rt_free_info(_prosInfo);
     }
 }
 @end
