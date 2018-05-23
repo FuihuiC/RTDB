@@ -9,8 +9,6 @@
 #import <Foundation/Foundation.h>
 #import "RTSDBExtra.h"
 
-//@class RTSDBExtra;
-
 @interface RTSDB : NSObject
 
 /**

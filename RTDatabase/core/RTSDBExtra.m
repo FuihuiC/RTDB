@@ -13,16 +13,17 @@
     dispatch_queue_t _work_q;
     dispatch_semaphore_t _semaphore;
 }
-@property (nonatomic, strong) RTDBDefault *dbManager;
+@property (nonatomic, weak) RTDBDefault *dbManager;
 
 @property (nonatomic, copy) NSString *sql;
 @property (nonatomic, strong) NSArray *arrArgs;
 @property (nonatomic, strong) NSDictionary *params;
 
 @property (nonatomic, strong) RTNext *next;
-@property (nonatomic, assign) BOOL result;
-@property (nonatomic, strong) NSError *err;
+
 @property (nonatomic, assign) BOOL async;
+
+@property (nonatomic, strong) NSError *err;
 @end
 
 @implementation RTSDBExtra

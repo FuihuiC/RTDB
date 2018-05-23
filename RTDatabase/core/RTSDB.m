@@ -9,8 +9,6 @@
 #import "RTSDB.h"
 #import "RTDBDefault.h"
 
-
-
 #define RT_EXTRA [[RTSDBExtra alloc] initWithDBManager:self.dbManager withSem:self->_semaphore]
 ///----------------------------------------------------------
 ///----------------------------------------------------------
@@ -47,7 +45,7 @@
 }
 
 - (RTSDBExtra *)onMain {
-    return RT_EXTRA;
+    return RT_EXTRA.onMain;
 }
 
 // Trying to use assertions to control incoming dispatch_queue_t is not empty. But think it's too violent and give up.

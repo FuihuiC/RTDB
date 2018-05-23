@@ -28,7 +28,6 @@ typedef void(^rt_select_block_t)(NSArray *);
 - (void(^)(rt_error_b_t))onError;
 
 #pragma mark Normal
-
 /** open database if path exist */
 - (RTSDBExtra *(^)(NSString *))onOpen;
 - (RTSDBExtra *(^)(NSString *, int))onOpenFlags;
