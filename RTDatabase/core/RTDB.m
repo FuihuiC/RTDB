@@ -10,28 +10,12 @@
 
 @implementation RTDB
 
-+ (instancetype)sharedInstance {
-    static id instance = nil;
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        instance = [[RTDB alloc] init];
-    });
-    return instance;
-}
-
 - (BOOL)close {
     BOOL suc = rt_sqlite3_close(_db);
     if (suc) {
         _db = nil;
     }
     return suc;
-}
-
-- (RTSync *)onSync {
-    if (_onSync == nil) {
-        _onSync = [[RTSync alloc] init];
-    }
-    return _onSync;
 }
 
 #pragma mark -

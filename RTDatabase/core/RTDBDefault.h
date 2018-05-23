@@ -9,10 +9,6 @@
 #import "RTDB.h"
 
 @interface RTDBDefault : RTDB
-
-/** instance */
-+ (instancetype)sharedInstance;
-
 /**
  Building a table based on the model class
 

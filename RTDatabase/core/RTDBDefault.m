@@ -18,26 +18,13 @@ typedef enum : NSUInteger {
 } RTDBOperateMode;
 
 @interface RTDBDefault ()
-@property (nonatomic, strong) RTDB *manager;
-
 @property (nonatomic, strong) NSMutableDictionary<NSString *, RTSQInfo *> *mDicTablesCache;
 @end
 
 @implementation RTDBDefault
 
-+ (instancetype)sharedInstance {
-    static id instance = nil;
-    
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        instance = [[RTDBDefault alloc] init];
-    });
-    return instance;
-}
-
 - (instancetype)init {
     if (self = [super init]) {
-        _manager = [RTDB sharedInstance];
         _mDicTablesCache = [NSMutableDictionary<NSString *, RTSQInfo *> dictionary];
     }
     return self;
@@ -65,7 +52,7 @@ typedef enum : NSUInteger {
         return NO;
     }
     
-    return rt_sqlite3_exec(_manager->_db, info->_creat, err);
+    return rt_sqlite3_exec(self->_db, info->_creat, err);
 }
 
 - (BOOL)insertObj:(id)obj withError:(NSError * __autoreleasing *)err {
@@ -100,7 +87,7 @@ typedef enum : NSUInteger {
     // get max _id before insert
     NSInteger _id = -1;
     if (op == op_insert) {
-        _id = rt_get_primary_id(_manager->_db, info->_maxid, err);
+        _id = rt_get_primary_id(self->_db, info->_maxid, err);
         if (_id != -1) {
             _id++;
         } else {
@@ -128,7 +115,7 @@ typedef enum : NSUInteger {
     }
     
     void *stmt;
-    if (!rt_sqlite3_prepare_v2(_manager->_db, sql, &stmt, err)) {
+    if (!rt_sqlite3_prepare_v2(self->_db, sql, &stmt, err)) {
         return NO;
     }
     
@@ -244,7 +231,7 @@ typedef enum : NSUInteger {
     }
     
     __block void *stmt;
-    if (!rt_sqlite3_prepare_v2(_manager->_db, [sql UTF8String], &stmt, err)) {
+    if (!rt_sqlite3_prepare_v2(self->_db, [sql UTF8String], &stmt, err)) {
         return NO;
     }
     

@@ -19,7 +19,7 @@ void rt_db_err(NSString *errMsg, NSError **err) {
     if (errMsg == nil) {
         errMsg = @"Unknown err!";
     }
-    
+    DELog(@"RTDB: %@", errMsg);
     *err = [NSError errorWithDomain:NSCocoaErrorDomain code:100002 userInfo:@{NSLocalizedDescriptionKey: errMsg}];
 }
 
@@ -33,6 +33,7 @@ void rt_sqlite3_err(int result, NSError **err) {
     if (!errMsg) {
         errMsg = @"Unknown err while run sqilte.";
     }
+    DELog(@"RTDB: %@", errMsg);
     *err = [NSError errorWithDomain:NSCocoaErrorDomain code:100001 userInfo:@{NSLocalizedDescriptionKey: errMsg}];
 }
 

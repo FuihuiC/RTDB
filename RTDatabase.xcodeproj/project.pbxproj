@@ -7,16 +7,18 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		27256BAF20B56E5600E37D3D /* RTSDBExtra.h in Headers */ = {isa = PBXBuildFile; fileRef = 27256BAD20B56E5600E37D3D /* RTSDBExtra.h */; };
+		27256BB020B56E5600E37D3D /* RTSDBExtra.m in Sources */ = {isa = PBXBuildFile; fileRef = 27256BAE20B56E5600E37D3D /* RTSDBExtra.m */; };
 		655704EF20A82039004238C0 /* RTDatabase.h in Headers */ = {isa = PBXBuildFile; fileRef = 655704ED20A82039004238C0 /* RTDatabase.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		6557050420A8210B004238C0 /* RTPreset.h in Headers */ = {isa = PBXBuildFile; fileRef = 655704F620A8210B004238C0 /* RTPreset.h */; settings = {ATTRIBUTES = (Public, ); }; };
-		6557050520A8210B004238C0 /* RTSync.m in Sources */ = {isa = PBXBuildFile; fileRef = 655704F720A8210B004238C0 /* RTSync.m */; };
+		6557050520A8210B004238C0 /* RTSDB.m in Sources */ = {isa = PBXBuildFile; fileRef = 655704F720A8210B004238C0 /* RTSDB.m */; };
 		6557050620A8210B004238C0 /* RTNext.h in Headers */ = {isa = PBXBuildFile; fileRef = 655704F820A8210B004238C0 /* RTNext.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		6557050720A8210B004238C0 /* RTDB.m in Sources */ = {isa = PBXBuildFile; fileRef = 655704F920A8210B004238C0 /* RTDB.m */; };
 		6557050820A8210B004238C0 /* RTDBDefault.m in Sources */ = {isa = PBXBuildFile; fileRef = 655704FA20A8210B004238C0 /* RTDBDefault.m */; };
 		6557050920A8210B004238C0 /* RTDBDefault.h in Headers */ = {isa = PBXBuildFile; fileRef = 655704FB20A8210B004238C0 /* RTDBDefault.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		6557050A20A8210B004238C0 /* RTDB.h in Headers */ = {isa = PBXBuildFile; fileRef = 655704FC20A8210B004238C0 /* RTDB.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		6557050B20A8210B004238C0 /* RTNext.m in Sources */ = {isa = PBXBuildFile; fileRef = 655704FD20A8210B004238C0 /* RTNext.m */; };
-		6557050C20A8210B004238C0 /* RTSync.h in Headers */ = {isa = PBXBuildFile; fileRef = 655704FE20A8210B004238C0 /* RTSync.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		6557050C20A8210B004238C0 /* RTSDB.h in Headers */ = {isa = PBXBuildFile; fileRef = 655704FE20A8210B004238C0 /* RTSDB.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		6557050D20A8210B004238C0 /* RTTools.m in Sources */ = {isa = PBXBuildFile; fileRef = 655704FF20A8210B004238C0 /* RTTools.m */; };
 		6557050E20A8210B004238C0 /* RTSQInfo.m in Sources */ = {isa = PBXBuildFile; fileRef = 6557050020A8210B004238C0 /* RTSQInfo.m */; };
 		6557050F20A8210B004238C0 /* RTStep.m in Sources */ = {isa = PBXBuildFile; fileRef = 6557050120A8210B004238C0 /* RTStep.m */; };
@@ -25,18 +27,20 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		27256BAD20B56E5600E37D3D /* RTSDBExtra.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RTSDBExtra.h; sourceTree = "<group>"; };
+		27256BAE20B56E5600E37D3D /* RTSDBExtra.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = RTSDBExtra.m; sourceTree = "<group>"; };
 		655704EA20A82039004238C0 /* RTDatabase.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = RTDatabase.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		655704ED20A82039004238C0 /* RTDatabase.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RTDatabase.h; sourceTree = "<group>"; };
 		655704EE20A82039004238C0 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		655704F620A8210B004238C0 /* RTPreset.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RTPreset.h; sourceTree = "<group>"; };
-		655704F720A8210B004238C0 /* RTSync.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RTSync.m; sourceTree = "<group>"; };
+		655704F720A8210B004238C0 /* RTSDB.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RTSDB.m; sourceTree = "<group>"; };
 		655704F820A8210B004238C0 /* RTNext.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RTNext.h; sourceTree = "<group>"; };
 		655704F920A8210B004238C0 /* RTDB.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RTDB.m; sourceTree = "<group>"; };
 		655704FA20A8210B004238C0 /* RTDBDefault.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RTDBDefault.m; sourceTree = "<group>"; };
 		655704FB20A8210B004238C0 /* RTDBDefault.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RTDBDefault.h; sourceTree = "<group>"; };
 		655704FC20A8210B004238C0 /* RTDB.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RTDB.h; sourceTree = "<group>"; };
 		655704FD20A8210B004238C0 /* RTNext.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RTNext.m; sourceTree = "<group>"; };
-		655704FE20A8210B004238C0 /* RTSync.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RTSync.h; sourceTree = "<group>"; };
+		655704FE20A8210B004238C0 /* RTSDB.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RTSDB.h; sourceTree = "<group>"; };
 		655704FF20A8210B004238C0 /* RTTools.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RTTools.m; sourceTree = "<group>"; };
 		6557050020A8210B004238C0 /* RTSQInfo.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RTSQInfo.m; sourceTree = "<group>"; };
 		6557050120A8210B004238C0 /* RTStep.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RTStep.m; sourceTree = "<group>"; };
@@ -96,8 +100,10 @@
 				6557050020A8210B004238C0 /* RTSQInfo.m */,
 				6557050320A8210B004238C0 /* RTStep.h */,
 				6557050120A8210B004238C0 /* RTStep.m */,
-				655704FE20A8210B004238C0 /* RTSync.h */,
-				655704F720A8210B004238C0 /* RTSync.m */,
+				655704FE20A8210B004238C0 /* RTSDB.h */,
+				655704F720A8210B004238C0 /* RTSDB.m */,
+				27256BAD20B56E5600E37D3D /* RTSDBExtra.h */,
+				27256BAE20B56E5600E37D3D /* RTSDBExtra.m */,
 			);
 			path = core;
 			sourceTree = "<group>";
@@ -113,8 +119,9 @@
 				6557051020A8210B004238C0 /* RTSQInfo.h in Headers */,
 				6557050A20A8210B004238C0 /* RTDB.h in Headers */,
 				6557050920A8210B004238C0 /* RTDBDefault.h in Headers */,
+				27256BAF20B56E5600E37D3D /* RTSDBExtra.h in Headers */,
 				655704EF20A82039004238C0 /* RTDatabase.h in Headers */,
-				6557050C20A8210B004238C0 /* RTSync.h in Headers */,
+				6557050C20A8210B004238C0 /* RTSDB.h in Headers */,
 				6557050420A8210B004238C0 /* RTPreset.h in Headers */,
 				6557050620A8210B004238C0 /* RTNext.h in Headers */,
 			);
@@ -189,8 +196,9 @@
 			files = (
 				6557050B20A8210B004238C0 /* RTNext.m in Sources */,
 				6557050F20A8210B004238C0 /* RTStep.m in Sources */,
+				27256BB020B56E5600E37D3D /* RTSDBExtra.m in Sources */,
 				6557050D20A8210B004238C0 /* RTTools.m in Sources */,
-				6557050520A8210B004238C0 /* RTSync.m in Sources */,
+				6557050520A8210B004238C0 /* RTSDB.m in Sources */,
 				6557050E20A8210B004238C0 /* RTSQInfo.m in Sources */,
 				6557050720A8210B004238C0 /* RTDB.m in Sources */,
 				6557050820A8210B004238C0 /* RTDBDefault.m in Sources */,

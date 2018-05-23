@@ -11,34 +11,16 @@
 
 
 #pragma mark - private interface
-/**
- 获取property类型
- 
- @param attr runtime 获取的 property attribute
- @return 类型 (rt_char_t)
- */
+/** property type */
 static rt_objc_t rt_object_type(rt_char_t *attr);
 
-/**
- 根据property类型 获取 bind 类型
- 
- @param c property类型
- @return bind 类型
- */
+/** property type to bind type */
 static rt_char_t *rt_sqlite3_bind_type(rt_char_t c);
 
+/** confirm the class's property _id form superclass */
 static BOOL rt_confirm_class_pro_id(Class cls);
 
-/**
- 获取需要建表的类的信息
- 
- @param cls 需要建表的类
- @param className 类名
- @param proInfos 属性信息
- @param creat  创建表的语句
- @param insert 插入sql语句
- @param update 改cloumn的语句
- */
+/** mode class info */
 static void rt_class_info(Class cls, BOOL *has_id, char **className, rt_pro_info_p *proInfos, char * *creat, char * *insert, char * *update, char * *delete);
 
 #pragma mark - FUNCTION

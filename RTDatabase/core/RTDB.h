@@ -11,7 +11,6 @@
 #import "RTPreset.h"
 #import "RTStep.h"
 #import "RTSQInfo.h"
-#import "RTSync.h"
 
 /**
  * This class is used to manage SQLite.
@@ -20,10 +19,6 @@
 @interface RTDB : NSObject  {
     void *_db;
 }
-
-@property (nonatomic, strong) RTSync *onSync;
-
-+ (instancetype)sharedInstance;
 
 #pragma mark -
 /**
