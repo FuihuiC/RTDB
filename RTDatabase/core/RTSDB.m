@@ -48,11 +48,9 @@
     return RT_EXTRA.onMain;
 }
 
-// Trying to use assertions to control incoming dispatch_queue_t is not empty. But think it's too violent and give up.
 - (RTSDBExtra *(^)(dispatch_queue_t))onQueue {
     return ^RTSDBExtra *(dispatch_queue_t q) {
-        if (q == NULL) return RT_EXTRA;
-        
+        NSAssert(q != NULL, @"RTDB while calling onQueue(), the q can not be NULL");
         return RT_EXTRA.onQueue(q);
     };
 }
@@ -77,7 +75,11 @@
 
 // ---
 - (RTSDBExtra *)onDefault {
-    return RT_EXTRA;
+    if (_defaultQueue == NULL) {
+        return RT_EXTRA;
+    } else {
+        return RT_EXTRA.onQueue(_defaultQueue);
+    }
 }
 
 - (RTSDBExtra *(^)(NSString *))onOpen {
@@ -92,31 +94,11 @@
     };
 }
 
+// -------------
+
 - (void)onClose {
     [self threadLock:^{
         [self.dbManager close];
     }];
 }
-
-// ---
-- (RTSDBExtra *(^)(NSString *, NSDictionary *))execDict {
-    return ^RTSDBExtra *(NSString *sql, NSDictionary *params) {
-        return RT_EXTRA.execDict(sql, params);
-    };
-}
-
-- (RTSDBExtra *(^)(NSString *, NSArray *))execArr {
-    return ^RTSDBExtra *(NSString *sql, NSArray *arrArgs) {
-        return RT_EXTRA.execArr(sql, arrArgs);
-    };
-}
-
-- (RTSDBExtra *(^)(NSString *, ...))execArgs {
-    return ^RTSDBExtra *(NSString *sql, ...) {
-        va_list args;
-        va_start(args, sql);
-        return RT_EXTRA.queryArgs(sql, &args);
-    };
-}
-
 @end

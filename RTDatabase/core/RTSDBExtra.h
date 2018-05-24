@@ -22,6 +22,8 @@ typedef void(^rt_select_block_t)(NSArray *);
 
 #pragma mark Usual
 - (void)threadLock:(rt_block_t)block;
+// back to defaultQueue
+- (RTSDBExtra *)onDefault;
 - (RTSDBExtra *(^)(dispatch_queue_t))onQueue;
 - (RTSDBExtra *)onMain;
 - (RTSDBExtra *(^)(rt_block_t))onWorkQueue;

@@ -68,4 +68,8 @@
         withArrArgs:(NSArray *)arrArgs
            withArgs:(va_list)args;
 
+
+- (BOOL)begin;
+- (BOOL)commit;
+- (BOOL)rollback;
 @end

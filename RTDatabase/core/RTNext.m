@@ -30,6 +30,9 @@
 }
 
 - (void)dealloc {
+    if (_infos != NULL) {
+        rt_free_info(_infos);
+    }
     [self finalizeStep];
 }
 

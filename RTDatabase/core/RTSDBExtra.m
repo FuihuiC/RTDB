@@ -14,7 +14,7 @@
     dispatch_semaphore_t _semaphore;
 }
 @property (nonatomic, weak) RTDBDefault *dbManager;
-
+@property (nonatomic, weak) dispatch_queue_t defaultQueue;
 @property (nonatomic, copy) NSString *sql;
 @property (nonatomic, strong) NSArray *arrArgs;
 @property (nonatomic, strong) NSDictionary *params;
@@ -67,9 +67,12 @@
 // run in last set queue.
 - (RTSDBExtra *(^)(rt_block_t))onWorkQueue {
     return ^RTSDBExtra *(rt_block_t block) {
+        
+        if (!block) return self;
+        
         dispatch_semaphore_t sem = dispatch_semaphore_create(0);
         [self runOnWorkQueue:^{
-            block();
+            [self lock:block];
             dispatch_semaphore_signal(sem);
         }];
         dispatch_semaphore_wait(sem, dispatch_time(DISPATCH_TIME_NOW, 30 * NSEC_PER_SEC));
@@ -92,6 +95,15 @@
         } else {
             block();
         }
+    }
+}
+
+// back to defaultQueue
+- (RTSDBExtra *)onDefault {
+    if (_defaultQueue == NULL) {
+        return self;
+    } else {
+        return self.onQueue(_defaultQueue);
     }
 }
 
@@ -130,11 +142,11 @@
             return self;
         } else {
             return self.onWorkQueue(^() {
-                [self lock:^{
-                    NSError *err;
-                    while ([self.next stepWithError:&err]) {}
-                    self.err = err;
-                }];
+                //                [self lock:^{
+                NSError *err;
+                while ([self.next stepWithError:&err]) {}
+                self.err = err;
+                //                }];
             });
         }
     };
@@ -151,9 +163,9 @@
             if (!self.next) {
                 return self;
             } else return self.onWorkQueue(^(){
-                [self lock:^{
-                    b(self.next);
-                }];
+                //                [self lock:^{
+                b(self.next);
+                //                }];
             });
         }
     };
@@ -179,12 +191,12 @@
 - (void (^)(rt_step_block_t))lockOnEnum {
     return ^(rt_step_block_t b) {
         __block NSError *error;
-        [self lock:^{
-            [self.next enumAllSteps:^(NSDictionary *dic, int step, BOOL *stop, NSError *err) {
-                error = err;
-                if (!err) b(dic, step, stop);
-            }];
+        //        [self lock:^{
+        [self.next enumAllSteps:^(NSDictionary *dic, int step, BOOL *stop, NSError *err) {
+            error = err;
+            if (!err) b(dic, step, stop);
         }];
+        //        }];
         self.err = error;
     };
 }
@@ -207,11 +219,11 @@
 }
 
 - (void)openDB:(NSString *)path withFlags:(int)flags {
-    [self lock:^{
-        NSError *err;
-        [self.dbManager openWithPath:path withFlags:flags withError:&err];
-        self.err = err;
-    }];
+    //    [self lock:^{
+    NSError *err;
+    [self.dbManager openWithPath:path withFlags:flags withError:&err];
+    self.err = err;
+    //    }];
 }
 
 #pragma mark -
@@ -256,15 +268,16 @@
     if (args != NULL) {
         _args = args;
     }
-    __block NSError *err = NULL;
-    [self lock:^{
-        RTNext *next = [self.dbManager execSql:sql withErr:&err withParams:params withArrArgs:arrArgs withArgs:(self->_args != NULL) ? *(self->_args) : NULL];
-        self.next = next;
-        if (self->_args != NULL) {
-            va_end(*(self->_args));
-            self->_args = 0x00;
-        }
-    }];
+    //    __block NSError *err = NULL;
+    NSError *err = NULL;
+    //    [self lock:^{
+    RTNext *next = [self.dbManager execSql:sql withErr:&err withParams:params withArrArgs:arrArgs withArgs:(self->_args != NULL) ? *(self->_args) : NULL];
+    self.next = next;
+    if (self->_args != NULL) {
+        va_end(*(self->_args));
+        self->_args = 0x00;
+    }
+    //    }];
     
     _err = err;
 }
@@ -278,11 +291,11 @@
     };
 }
 - (void)tableCreat:(Class)cls {
-    [self lock:^{
-        NSError *err;
-        [self.dbManager creatTable:cls withError:&err];
-        self.err = err;
-    }];
+    //    [self lock:^{
+    NSError *err;
+    [self.dbManager creatTable:cls withError:&err];
+    self.err = err;
+    //    }];
 }
 
 // insert
@@ -295,11 +308,11 @@
 }
 
 - (void)insertObj:(id)obj {
-    [self lock:^{
-        NSError *err;
-        [self.dbManager insertObj:obj withError:&err];
-        self.err = err;
-    }];
+    //    [self lock:^{
+    NSError *err;
+    [self.dbManager insertObj:obj withError:&err];
+    self.err = err;
+    //    }];
 }
 
 // update
@@ -312,11 +325,11 @@
 }
 
 - (void)updateObj:(id)obj {
-    [self lock:^{
-        NSError *err;
-        [self.dbManager updateObj:obj withError:&err];
-        self.err = err;
-    }];
+    //    [self lock:^{
+    NSError *err;
+    [self.dbManager updateObj:obj withError:&err];
+    self.err = err;
+    //    }];
 }
 
 // delete
@@ -329,11 +342,11 @@
 }
 
 - (void)deleteObj:(id)obj {
-    [self lock:^{
-        NSError *err;
-        [self.dbManager deleteObj:obj withError:&err];
-        self.err = err;
-    }];
+    //    [self lock:^{
+    NSError *err;
+    [self.dbManager deleteObj:obj withError:&err];
+    self.err = err;
+    //    }];
 }
 
 // select
@@ -351,12 +364,13 @@
 }
 
 - (NSArray <NSDictionary *>*)selectDics:(NSString *)sql {
-    __block NSArray <NSDictionary *>* results;
-    [self lock:^{
-        NSError *err;
-        results = [self.dbManager fetchSql:sql withError:&err];
-        self.err = err;
-    }];
+    //    __block
+    NSArray <NSDictionary *>* results;
+    //    [self lock:^{
+    NSError *err;
+    results = [self.dbManager fetchSql:sql withError:&err];
+    self.err = err;
+    //    }];
     return results;
 }
 
@@ -375,12 +389,38 @@
 }
 
 - (NSArray *)selectObjs:(NSString *)sql {
-    __block NSArray <NSDictionary *>* results;
-    [self lock:^{
-        NSError *err;
-        results = [self.dbManager fetchObjSql:sql withError:&err];
-        self.err = err;
-    }];
+    //    __block
+    NSArray <NSDictionary *>* results;
+    //    [self lock:^{
+    NSError *err;
+    results = [self.dbManager fetchObjSql:sql withError:&err];
+    self.err = err;
+    //    }];
     return results;
+}
+
+#pragma mark -
+- (RTSDBExtra *)onBegin {
+    return self.onWorkQueue(^{
+        //        [self lock:^{
+        [self.dbManager begin];
+        //        }];
+    });
+}
+
+- (RTSDBExtra *)onCommit {
+    return self.onWorkQueue(^{
+        //        [self lock:^{
+        [self.dbManager commit];
+        //        }];
+    });
+}
+
+- (RTSDBExtra *)onRollback {
+    return self.onWorkQueue(^{
+        //        [self lock:^{
+        [self.dbManager rollback];
+        //        }];
+    });
 }
 @end

@@ -230,4 +230,16 @@
     return sql_format;
 }
 
+// --------------------------------------
+- (BOOL)begin {
+    return [self execQuery:@"BEGIN", nil];
+}
+
+- (BOOL)commit {
+    return [self execQuery:@"COMMIT", nil];
+}
+
+- (BOOL)rollback {
+    return [self execQuery:@"ROLLBACK", nil];
+}
 @end
