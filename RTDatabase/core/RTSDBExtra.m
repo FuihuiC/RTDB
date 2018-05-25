@@ -20,6 +20,7 @@
 @property (nonatomic, strong) NSArray *arrArgs;
 @property (nonatomic, strong) NSDictionary *params;
 @property (nonatomic, strong) NSString *workQueueLabel;
+@property (nonatomic, assign) BOOL backMain; // 是否回到主队列
 
 @property (nonatomic, strong) RTNext *next;
 
@@ -75,7 +76,7 @@
         
         dispatch_semaphore_t sem = dispatch_semaphore_create(0);
         [self runOnWorkQueue:^{
-            [self lock:block];
+            block();
             dispatch_semaphore_signal(sem);
         }];
         dispatch_semaphore_wait(sem, dispatch_time(DISPATCH_TIME_NOW, 30 * NSEC_PER_SEC));
@@ -86,20 +87,22 @@
 - (void)runOnWorkQueue:(rt_block_t)block {
     if (!block) return;
     
-    if (self->_work_q != NULL) {
-        dispatch_async(dispatch_get_main_queue(), block);
-    } else {
+    if (self.backMain) {
         if (![NSThread isMainThread]) {
             dispatch_async(dispatch_get_main_queue(), block);
         } else {
             block();
         }
+    } else if (self->_work_q != NULL) {
+        dispatch_async(self->_work_q, block);
+    } else {
+        block();
     }
 }
 
 // back to defaultQueue
 - (RTSDBExtra *)onDefault {
-
+    
     if (self.err) {
         self.err = nil;
     }
@@ -122,7 +125,7 @@
 
 // change queue.
 - (RTSDBExtra *)onMain {
-    
+    self.backMain = YES;
     self->_work_q = NULL;
     return self;
 }
@@ -130,7 +133,7 @@
 - (RTSDBExtra *(^)(dispatch_queue_t))onQueue {
     return ^RTSDBExtra *(dispatch_queue_t q) {
         if (q == NULL) return self.onMain;
-        
+        self.backMain = NO;
         self->_work_q = q;
         return self;
     };
@@ -317,6 +320,8 @@
     NSError *err;
     [self.dbManager insertObj:obj withError:&err];
     self.err = err;
+    
+    DELog(@"%@", [NSThread currentThread]);
 }
 
 // update
@@ -400,6 +405,24 @@
 }
 
 #pragma mark -
+
+- (RTSDBExtra *(^)(rt_block_t))transaction {
+    return ^(rt_block_t block) {
+        
+        NSAssert(block != NULL, @"RTDB: - The block while transacting can not be NULL.");
+        
+        return self.onWorkQueue(^(){
+            [self.dbManager begin];
+            @try {
+                block();
+            } @catch (NSException *exception) {
+                [self.dbManager rollback];
+            }
+            [self.dbManager commit];
+        });
+    };
+}
+
 - (RTSDBExtra *)onBegin {
     return self.onWorkQueue(^{
         [self.dbManager begin];

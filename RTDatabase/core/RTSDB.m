@@ -38,7 +38,7 @@
 
 - (instancetype)init {
     if (self = [super init]) {
-        _semaphore = dispatch_semaphore_create(1);
+        _semaphore = dispatch_semaphore_create(5);
         _dbManager = [[RTDBDefault alloc] init];
     }
     return self;

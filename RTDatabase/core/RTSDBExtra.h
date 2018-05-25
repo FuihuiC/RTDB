@@ -71,4 +71,9 @@ typedef void(^rt_select_block_t)(NSArray *);
 - (RTSDBExtra *(^)(id obj))onDelete;
 - (RTSDBExtra *(^)(NSString *, rt_select_block_t))onFetchDics;
 - (RTSDBExtra *(^)(NSString *, rt_select_block_t))onFetchObjs;
+
+#pragma mark Transaction
+- (RTSDBExtra *)onBegin;
+- (RTSDBExtra *)onCommit;
+- (RTSDBExtra *)onRollback;
 @end
