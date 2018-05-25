@@ -38,26 +38,6 @@
 - (RTSDBExtra *(^)(dispatch_queue_t))onQueue;
 - (RTSDBExtra *)onMain;
 
-
-///** open database if path exist */
-//- (RTSDBExtra *(^)(NSString *))onOpen;
-//- (RTSDBExtra *(^)(NSString *, int))onOpenFlags;
-//
-///**
-// * Execute a sql statement.
-// * Three methods of parameter typed of NSDictionary NSArray and ...
-// * After these three methods, please call onEnum or onStep.
-// */
-//- (RTSDBExtra *(^)(NSString *, NSDictionary *))execDict;
-//- (RTSDBExtra *(^)(NSString *, NSArray *))execArr;
-//- (RTSDBExtra *(^)(NSString *, ...))execArgs;
-
-/** Transaction */
-//- (void)onBegin;
-//- (void)onCommit;
-//- (void)onRollback;
-
-
 /** close database */
 - (void)onClose;
 @end

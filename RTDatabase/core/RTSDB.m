@@ -9,7 +9,7 @@
 #import "RTSDB.h"
 #import "RTDBDefault.h"
 
-#define RT_EXTRA [[RTSDBExtra alloc] initWithDBManager:self.dbManager withSem:self->_semaphore]
+#define RT_EXTRA [[RTSDBExtra alloc] initWithDBManager:self.dbManager withSem:self->_semaphore withDefaultQueue:self.defaultQueue]
 ///----------------------------------------------------------
 ///----------------------------------------------------------
 ///----------------------------------------------------------
@@ -17,7 +17,7 @@
 @interface RTSDBExtra ()
 - (RTSDBExtra *(^)(NSString *, va_list *))queryArgs;
 
-- (instancetype)initWithDBManager:(RTDBDefault *)dbManager withSem:(dispatch_semaphore_t)semaphore;
+- (instancetype)initWithDBManager:(RTDBDefault *)dbManager withSem:(dispatch_semaphore_t)semaphore withDefaultQueue:(dispatch_queue_t)q;
 
 @end
 
@@ -50,7 +50,8 @@
 
 - (RTSDBExtra *(^)(dispatch_queue_t))onQueue {
     return ^RTSDBExtra *(dispatch_queue_t q) {
-        NSAssert(q != NULL, @"RTDB while calling onQueue(), the q can not be NULL");
+        if (q == NULL) return self.onMain;
+        
         return RT_EXTRA.onQueue(q);
     };
 }
@@ -95,7 +96,6 @@
 }
 
 // -------------
-
 - (void)onClose {
     [self threadLock:^{
         [self.dbManager close];
