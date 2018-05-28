@@ -38,7 +38,7 @@
 
 - (instancetype)init {
     if (self = [super init]) {
-        _semaphore = dispatch_semaphore_create(5);
+        _semaphore = dispatch_semaphore_create(1);
         _dbManager = [[RTDBDefault alloc] init];
     }
     return self;
@@ -67,7 +67,7 @@
         if (self->_semaphore == NULL) {
             block();
         } else {
-            dispatch_semaphore_wait(self->_semaphore, dispatch_time(DISPATCH_TIME_NOW, 30 * NSEC_PER_SEC));
+            dispatch_semaphore_wait(self->_semaphore, dispatch_time(DISPATCH_TIME_NOW, DISPATCH_TIME_FOREVER));
             block();
             dispatch_semaphore_signal(self->_semaphore);
         }

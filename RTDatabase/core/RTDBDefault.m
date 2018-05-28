@@ -17,7 +17,9 @@ typedef enum : NSUInteger {
     op_delete,
 } RTDBOperateMode;
 
-@interface RTDBDefault ()
+@interface RTDBDefault () {
+    dispatch_semaphore_t _semaphore;
+}
 @property (nonatomic, strong) NSMutableDictionary<NSString *, RTSQInfo *> *mDicTablesCache;
 @end
 
@@ -25,6 +27,7 @@ typedef enum : NSUInteger {
 
 - (instancetype)init {
     if (self = [super init]) {
+        _semaphore = dispatch_semaphore_create(1);
         _mDicTablesCache = [NSMutableDictionary<NSString *, RTSQInfo *> dictionary];
     }
     return self;
@@ -35,11 +38,15 @@ typedef enum : NSUInteger {
     NSString *clsName = [NSString stringWithUTF8String:rt_class_name(cls)];
     if (!clsName || clsName.length == 0) return nil;
     
+    dispatch_semaphore_wait(_semaphore, dispatch_time(DISPATCH_TIME_NOW, DISPATCH_TIME_FOREVER));
+    
     RTSQInfo *info = _mDicTablesCache[clsName];
     if (!info) {
         info = [[RTSQInfo alloc] initWithClass:cls];
         _mDicTablesCache[clsName] = info;
     }
+    
+    dispatch_semaphore_signal(_semaphore);
     return info;
 }
 #pragma mark - 
@@ -136,7 +143,7 @@ typedef enum : NSUInteger {
     if (!res) {
         return NO;
     }
-   
+    
     if (op == op_insert) {
         // Assignment the maximum primary key value to the table to _id
         [obj setValue:@(_id) forKey:@"_id"];

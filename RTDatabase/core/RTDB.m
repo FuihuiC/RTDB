@@ -22,7 +22,7 @@
 - (BOOL)openWithPath:(NSString *)path withError:(NSError *__autoreleasing *)error {
     NSAssert(path, @"DB path should not be empty!");
     
-    int flags = RT_SQLITE_OPEN_CREATE | RT_SQLITE_OPEN_READWRITE | RT_SQLITE_OPEN_NOMUTEX | RT_SQLITE_OPEN_SHAREDCACHE;
+    int flags = RT_SQLITE_OPEN_CREATE | RT_SQLITE_OPEN_READWRITE | RT_SQLITE_OPEN_FULLMUTEX | RT_SQLITE_OPEN_SHAREDCACHE;
     return rt_sqlite3_open(&_db, path, flags, error);
 }
 

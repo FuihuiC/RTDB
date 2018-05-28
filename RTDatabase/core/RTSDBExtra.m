@@ -26,6 +26,7 @@
 
 // ---------------
 @property (nonatomic, strong) NSError *err;
+@property (nonatomic, assign) BOOL needSync;
 @end
 
 @implementation RTSDBExtra
@@ -62,13 +63,13 @@
     if (self->_semaphore == NULL) {
         block();
     } else {
-        dispatch_semaphore_wait(self->_semaphore, dispatch_time(DISPATCH_TIME_NOW, 30 * NSEC_PER_SEC));
+        dispatch_semaphore_wait(self->_semaphore, dispatch_time(DISPATCH_TIME_NOW, DISPATCH_TIME_FOREVER));
         block();
         dispatch_semaphore_signal(self->_semaphore);
     }
 }
 
-// run in last set queue.
+// run in the queue last set.
 - (RTSDBExtra *(^)(rt_block_t))onWorkQueue {
     return ^RTSDBExtra *(rt_block_t block) {
         
@@ -76,10 +77,10 @@
         
         dispatch_semaphore_t sem = dispatch_semaphore_create(0);
         [self runOnWorkQueue:^{
-            block();
+            [self lock:block];
             dispatch_semaphore_signal(sem);
         }];
-        dispatch_semaphore_wait(sem, dispatch_time(DISPATCH_TIME_NOW, 30 * NSEC_PER_SEC));
+        dispatch_semaphore_wait(sem, dispatch_time(DISPATCH_TIME_NOW, DISPATCH_TIME_FOREVER));
         return self;
     };
 }
@@ -213,13 +214,12 @@
 
 - (RTSDBExtra *(^)(NSString *))onOpen {
     return ^(NSString *path) {
-        return self.onWorkQueue(^() {
-            [self openDB:path withFlags:(RT_SQLITE_OPEN_CREATE | RT_SQLITE_OPEN_READWRITE | RT_SQLITE_OPEN_NOMUTEX | RT_SQLITE_OPEN_SHAREDCACHE)];
-        });
+        return self.onOpenFlags(path, RT_SQLITE_OPEN_CREATE | RT_SQLITE_OPEN_READWRITE | RT_SQLITE_OPEN_NOMUTEX | RT_SQLITE_OPEN_SHAREDCACHE);
     };
 }
 
 - (RTSDBExtra *(^)(NSString *, int))onOpenFlags {
+    
     return ^(NSString *path, int flags) {
         return self.onWorkQueue(^() {
             [self openDB:path withFlags:flags];
@@ -320,8 +320,6 @@
     NSError *err;
     [self.dbManager insertObj:obj withError:&err];
     self.err = err;
-    
-    DELog(@"%@", [NSThread currentThread]);
 }
 
 // update
@@ -372,10 +370,8 @@
 
 - (NSArray <NSDictionary *>*)selectDics:(NSString *)sql {
     
-    NSArray <NSDictionary *>* results;
-    
     NSError *err;
-    results = [self.dbManager fetchSql:sql withError:&err];
+    NSArray <NSDictionary *>* results = [self.dbManager fetchSql:sql withError:&err];
     self.err = err;
     
     return results;
