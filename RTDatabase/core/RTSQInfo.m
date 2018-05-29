@@ -21,7 +21,7 @@ static rt_char_t *rt_sqlite3_bind_type(rt_char_t c);
 static BOOL rt_confirm_class_pro_id(Class cls);
 
 /** mode class info */
-static void rt_class_info(Class cls, BOOL *has_id, char **className, rt_pro_info_p *proInfos, char * *creat, char * *insert, char * *update, char * *delete);
+static void rt_class_info(Class cls, BOOL *has_id, char **className, rt_pro_info_p *proInfos, char **creat, char **insert, char **update, char **delete);
 
 #pragma mark - FUNCTION
 

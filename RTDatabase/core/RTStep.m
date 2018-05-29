@@ -12,7 +12,7 @@
 #pragma mark -
 #pragma mark FUNCTION
 
-static const int baseCode = 10000;
+const int baseCode = 10000;
 
 void rt_error(NSString *errMsg, int code, NSError **err) {
     if (err == NULL) return;

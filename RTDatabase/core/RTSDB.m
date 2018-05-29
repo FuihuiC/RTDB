@@ -7,7 +7,6 @@
 //
 
 #import "RTSDB.h"
-#import "RTDBDefault.h"
 
 #define RT_EXTRA [[RTSDBExtra alloc] initWithDBManager:self.db withDefaultQueue:self.defaultQueue]
 ///----------------------------------------------------------
@@ -15,7 +14,7 @@
 ///----------------------------------------------------------
 #pragma mark - RTSDBExtra
 @interface RTSDBExtra ()
-- (instancetype)initWithDBManager:(RTDBDefault *)dbManager  withDefaultQueue:(dispatch_queue_t)q;
+- (instancetype)initWithDBManager:(RTDBDefault *)dbManager withDefaultQueue:(dispatch_queue_t)q;
 @end
 
 ///----------------------------------------------------------

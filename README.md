@@ -2,6 +2,14 @@
 <img src="RTDB-logo.png" title="RTDB logo" float=left>
 </p>
 
+
+
+## SQLite
+RTDB is build on top of SQLite.  
+See more:  
+[SQLite Home](http://sqlite.org/index.html)  
+[SQLite Documentation](http://www.sqlite.org/docs.html)
+
 ## Installing
 
 #### Installation with CocoaPods
@@ -10,29 +18,48 @@ pod 'RTDatabase'
 ```
 #### Installation by cloning the repository
 
-
 ## How To Use
 * RTDB
+
+
+#### RTDB requires ARC.
+
+Open sqlite3 using the flags by default:
+###### SQLITE_OPEN_CREATE | SQLITE_OPEN_READWRITE | SQLITE_OPEN_FULLMUTEX | SQLITE_OPEN_SHAREDCACHE   
+or you can customize the flags.
+
+```
+// init a RTDB instance.
+RTDB *db = [[RTDB alloc] init];
+```
+- OPEN  
+Before using RTDB, it must be opened.
 ```
 // Open DB
 NSError *err;
-[[RTDB sharedInstance] openWithPath:@"~/RTDB.sqlite3" withError:&err];
-
+BOOL result = [db openWithPath:@"~/RTDB.sqlite3" withError:&err];
+if (!result) {
+NSLog(@"%@". err);
+}
+```  
+- EXECUTE  
+If sql string do not have a `SELECT`, you may call methods begin with `execQuery` which return a value type of BOOL.  
+These methods are actually wrapper around `sqlite3_prepare_v2()`, `sqlite3_step()`, and `sqlite3_finalize()`.
+```
 // creat table
-[[RTDB sharedInstance] 
-execQuery:@"CREATE TABLE if not exists 'DB' \
+[db execQuery:@"CREATE TABLE if not exists 'DB' \
 ('name' 'TEXT', 'data' 'BLOB', 'n' 'REAL', 'date' 'REAL', \
 'f' 'REAL', 'd' 'REAL', 'c' 'INTEGER', 'uc' 'INTEGER')", nil];
 
 // insert
 /**
- * sql like
- * @"INSERT INTO DB (name, data, n, date, f, d, c, uc) \
- * VALUES (:name, :data, :n, :date, :f, :d, :c, :uc)"
- * is supported better.
- */  
- 
-[[RTDB sharedInstance] execQuery:
+* sql like
+* @"INSERT INTO DB (name, data, n, date, f, d, c, uc) \
+* VALUES (:name, :data, :n, :date, :f, :d, :c, :uc)"
+* is supported better.
+*/  
+
+[db execQuery:
 @"INSERT INTO DB (name, data, n, date, f, d, c, uc) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
 @"_name",
 [@"test" dataUsingEncoding:NSUTF8StringEncoding],
@@ -43,9 +70,14 @@ execQuery:@"CREATE TABLE if not exists 'DB' \
 @(-'c'),
 @('c'),
 nil];
+```
+Methods begin with `execSql` return an object of RTNext. If sql string has a 'SELECT', call these motheds.  
+The object type of RTNext can call `step` to see if there is any next step. Or use `enumAllSteps` `enumAllColumns` to enumerate every step's values.  
+
+```
 
 // select
-RTNext *next = [[RTDB sharedInstance] execSql:@"SELECT * FROM DB", nil];
+RTNext *next = [db execSql:@"SELECT * FROM DB", nil];
 
 [next enumAllSteps:^(NSDictionary *dic, int step, BOOL *stop, NSError *err) {
 if (!err) {
@@ -57,12 +89,19 @@ NSLog(@"%@", dic);
 
 BOOL step = [next step]; // When sqlite3_step() == SQLITE_ROW, return YES.
 ```
-* RTDBDefault
+* RTDBDefault  
+RTDBDefault inherits RTDB, so all RTDB's method are enabled while using RTDBDefault.  
+RTDBDefault can create a table by class automaticly, and convert per row selected from table to an object Type of the class, which has the same name of the table. It is important to note that the class need have a property named "_id" and type of integer.  
+
+```
+// init a RTDBDefault instance.
+RTDBDefault *defaultDB = [[RTDBDefault alloc] init];
+```  
+
 ```
 // creat table for model class. 
-
 NSError *err;
-[[RTDBDefault sharedInstance] creatTable:[DB class] withError:&err];
+[defaultDB creatTable:[DB class] withError:&err];
 
 /**
 * @interface DB : NSObject
@@ -72,35 +111,36 @@ NSError *err;
 */
 DB *obj = [[DB alloc] init];
 // insert
-[[RTDBDefault sharedInstance] insertObj:obj withError:&err];
+[defaultDB insertObj:obj withError:&err];
 // update
-[[RTDBDefault sharedInstance] updateObj:obj withError:&err];
+[defaultDB updateObj:obj withError:&err];
 // delete
-[[RTDBDefault sharedInstance] deleteObj:obj withError:&err];
+[defaultDB deleteObj:obj withError:&err];
 
-NSArray <DB *>*arr = [[RTDBDefault sharedInstance] 
-                     fetchObjSql:@"SELECT * FROM DB order by _id" withError:&err];
+NSArray <DB *>*arr = [defaultDB 
+fetchObjSql:@"SELECT * FROM DB order by _id" withError:&err];
 
-NSArray <NSDictionary *>*arr = [[RTDBDefault sharedInstance] 
-                     fetchSql:@"SELECT * FROM DB order by _id" withError:&err];
+NSArray <NSDictionary *>*arr = [defaultDB 
+fetchSql:@"SELECT * FROM DB order by _id" withError:&err];
 ```
 
-* [RTDB sharedInstance].onSync or [RTDBDefault sharedInstance].onSync
+* RTSDB & RTSDBExtra  
+RTSDB & RTSDBExtra provide a chainable way of using RTDB & RTDBDefault.  
+When calling RTSDB instance's method, it will return a new RTSDBExtra instance. RTSDBExtra's instance methods are chainable.  
 
-While using .onSync, [RTDB sharedInstance] or [RTDBDefault sharedInstance] 
-it doesn't matter to select which one.
 ```
+// init a RTSDB instance.
+RTSDB *db = [[RTSDB alloc] init];
+
 // open database
-[RTDB sharedInstance]
-.onSync
+db.onDefault
 .onOpen(@"~/RTDB.sqlite3")
 .onError(^(NSError *err) {
 NSLog(@"%@", err);
 });
 
 // creat table
-[RTDB sharedInstance]
-.onSync
+db.onDefault
 .execArgs(@"CREATE TABLE if not exists 'DB' \
 ('name' 'TEXT', 'data' 'BLOB', 'n' 'REAL', 'date' 'REAL', 'f' \
 'REAL', 'd' 'REAL', 'c' 'INTEGER', 'uc' 'INTEGER')", nil)
@@ -110,8 +150,7 @@ NSLog(@"%@", err);
 });
 
 // insert
-[RTDB sharedInstance]
-.onSync
+db.onDefault
 .execArgs(
 @"INSERT INTO DB (name, data, n, date, f, d, c, uc) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
 @"name",
@@ -128,11 +167,8 @@ nil)
 NSLog(@"%@", err);
 });
 // select
-[RTDB sharedInstance]
-.onSync
-.onQueue(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0))
-.execArgs(@"SELECT * FROM DB", nil)
-// .onQueue(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0))
+db.onDefault
+.execArgs(@"SELECT * FROM DB", nil) 0))
 .onEnum(^(NSDictionary *dic, int step, BOOL *stop){
 NSLog(@"%@", dic);
 NSLog(@"%d", step);
@@ -151,36 +187,28 @@ NSLog(@"%@", err);
 */
 DB *obj = [[DB alloc] init];
 // insert 
-[RTDB sharedInstance]
-.onSync
-.onDefault
+db.onDefault
 .onInsert(obj)
 .onError(^(NSError *err) {
 NSLog(@"%@", err);
 });  
 
 // update
-[RTDB sharedInstance]
-.onSync
-.onQueue(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0))
+db.onDefault
 .onUpdate(obj)
 .onError(^(NSError *err) {
 NSLog(@"%@", err);
 });
 
 // delete
-[RTDB sharedInstance]
-.onSync
-.onDefault
+db.onDefault
 .onDelete(obj)
 .onError(^(NSError *err) {
 NSLog(@"%@", err);
 });
 
 // select    
-[RTDBDefault sharedInstance]
-.onSync
-.onDefault
+db.onDefault
 .onFetchDics(@"SELECT * FROM DB order by _id", ^(NSArray <NSDictionary *>* result) {
 for (NSDictionary *dic in result) {
 NSLog(@"%@", dic);
@@ -189,9 +217,7 @@ NSLog(@"%@", dic);
 .onError(^(NSError *err) {
 NSLog(@"%@", err);
 });
-[RTDBDefault sharedInstance]
-.onSync
-.onDefault
+db.onDefault
 .onFetchObjs(@"", ^(NSArray <DB *>*result) {
 for (DB *obj in result) {
 NSLog(@"%@", obj);
@@ -201,8 +227,7 @@ NSLog(@"%@", obj);
 NSLog(@"%@", err);
 });
 
-[RTDB sharedInstance]
-.onSync
+db.onDefault
 .execArgs(@"SELECT * FROM DB")
 .onStep(^(RTNext *next) {
 int count = [next columnCountOfRow];
@@ -218,14 +243,13 @@ NSLog(@"name: %@, value = %@", name, value);
 NSLog(@"%@", err)
 });
 ```
-## Thread safe
-- While using RTDB or RTDBDefault without .onSync, thread is not safe.  
-- Methods of RTSync or RTSyncRun operate db are thread safe.  
-- RTSync use dispatch_semaphore_t to control concurrency.  
-See more
-* [dispatch_semaphore_create](https://developer.apple.com/documentation/dispatch/1452955-dispatch_semaphore_create?language=objc)
-* [dispatch_semaphore_wait](https://developer.apple.com/documentation/dispatch/1452919-dispatch_semaphore_signal?language=objc)
-* [dispatch_semaphore_signal](https://developer.apple.com/documentation/dispatch/1452919-dispatch_semaphore_signal?language=occ)
+
+* Asynchronous  
+RTSDB & RTSDBExtra provide an asynchronous scheme.  
+If set the RTSDB instance's `defaultQueue` typed of `dispatch_queue_t`, and then all operation will be called on this queue.  
+And you can call `onQueue()` or `onMain` change the queue next. The `onQueue()` and `onMain` will not change the defaultQueue.
+Calling `onDefault` will change back defaultQueue.
+
 
 ## Author
 
