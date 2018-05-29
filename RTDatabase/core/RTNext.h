@@ -7,7 +7,6 @@
 //
 
 #import <Foundation/Foundation.h>
-@class RTSync;
 
 /**
  Method (enumAllSteps:) callback block type

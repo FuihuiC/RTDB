@@ -6,9 +6,7 @@
 //  Copyright © 2018年 ENUUI. All rights reserved.
 //
 
-#import <Foundation/Foundation.h>
 #import "RTNext.h"
-#import "RTPreset.h"
 #import "RTStep.h"
 #import "RTSQInfo.h"
 

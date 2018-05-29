@@ -6,7 +6,6 @@
 //  Copyright © 2018年 ENUUI. All rights reserved.
 //
 
-#import <Foundation/Foundation.h>
 #import "RTDBDefault.h"
 
 typedef void(^rt_error_b_t)(NSError *error);
