@@ -11,30 +11,25 @@
 
 #pragma mark -
 #pragma mark FUNCTION
-void rt_db_err(NSString *errMsg, NSError **err) {
-    if (err == NULL) {
-        return;
-    }
+
+static const int baseCode = 10000;
+
+void rt_error(NSString *errMsg, int code, NSError **err) {
+    if (err == NULL) return;
     
-    if (errMsg == nil) {
-        errMsg = @"Unknown err!";
-    }
+    if (errMsg == nil) errMsg = @"Unknown err!";
+    
     DELog(@"RTDB: %@", errMsg);
-    *err = [NSError errorWithDomain:NSCocoaErrorDomain code:100002 userInfo:@{NSLocalizedDescriptionKey: errMsg}];
+    *err = [NSError errorWithDomain:NSCocoaErrorDomain code:code userInfo:@{NSLocalizedDescriptionKey: errMsg}];
 }
 
 // sqlite3 error handle
 void rt_sqlite3_err(int result, NSError **err) {
-    if (err == NULL) {
-        return;
-    }
     
     NSString *errMsg = [NSString stringWithUTF8String:sqlite3_errstr(result)];
-    if (!errMsg) {
-        errMsg = @"Unknown err while run sqilte.";
-    }
-    DELog(@"RTDB: %@", errMsg);
-    *err = [NSError errorWithDomain:NSCocoaErrorDomain code:100001 userInfo:@{NSLocalizedDescriptionKey: errMsg}];
+    int code = baseCode + result;
+    
+    rt_error(errMsg, code, err);
 }
 
 // open db
@@ -77,11 +72,12 @@ bool rt_sqlite3_close(void *db) {
 // sqlite3_exec
 int rt_sqlite3_exec(void *db, rt_char_t *sql, NSError **err) {
     char *errmsg;
-    int result = rt_sqlite3_status_code(sqlite3_exec((sqlite3 *)db, sql, NULL, NULL, &errmsg));
+    int reCode = sqlite3_exec((sqlite3 *)db, sql, NULL, NULL, &errmsg);
+    int result = rt_sqlite3_status_code(reCode);
     
     if (result == RT_SQLITE_ERROR) {
         NSString *msg = (errmsg == NULL) ? @"Unknown error" : [NSString stringWithUTF8String:errmsg];
-        rt_db_err(msg, err);
+        rt_error(msg, baseCode + reCode, err);
         if (errmsg != NULL) {
             free(errmsg);
         }

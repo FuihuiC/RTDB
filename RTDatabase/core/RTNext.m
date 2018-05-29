@@ -85,7 +85,7 @@
     NSError *err;
     int count = rt_sqlite3_column_count(_stmt);
     if (count == 0) {
-        rt_db_err([NSString stringWithFormat:@"RTDB did not find column. -sql: %@", _sql], &err);
+        rt_error([NSString stringWithFormat:@"RTDB did not find column. -sql: %@", _sql], 1000008, &err);
         stepback(nil, 0, NULL, err);
         columnback(nil, nil, 0, 0, NULL, err);
         return;
@@ -119,7 +119,7 @@
             }
             
             if (name == nil) {
-                rt_db_err([NSString stringWithFormat:@"RTDB found empty name for value: %@. -sql: %@", value, _sql], &err);
+                rt_error([NSString stringWithFormat:@"RTDB found empty name for value: %@. -sql: %@", value, _sql], 1000008, &err);
                 columnback(nil, nil, step, column, &stop, err);
             } else {
                 columnback(name, value, step, column, &stop, nil);
@@ -130,7 +130,7 @@
         if (mDic.count > 0) {
             stepback(mDic.copy, step, &stop, nil);
         } else {
-            rt_db_err([NSString stringWithFormat:@"RTDB found out empty row at %d. -sql: %@", step, _sql], &err);
+            rt_error([NSString stringWithFormat:@"RTDB found out empty row at %d. -sql: %@", step, _sql], 1000008, &err);
             stepback(nil, step, &stop, err);
         }
         step++;

@@ -41,9 +41,14 @@
 
 typedef void(^rt_column_enum_block_t)(const char *cname, id value);
 
-/** error */
-void rt_db_err(
+/**
+ * error
+ * 1000001: empty sql string.
+ *
+ */
+RT_EXTERN void rt_error(
   NSString *errMsg, /* message */
+  int code,         /* err code */
   NSError **err     /* OUT: NSError */
 );
 
