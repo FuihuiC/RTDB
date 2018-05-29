@@ -203,7 +203,7 @@
     return next;
 }
 
-// format sql for bind. change (?, ?...) to (:name1, name2, ...)
+// format sql for bind. change (?, ?...) to (:name1, :name2, ...)
 - (NSString *)formatSqlForDictArgu:(NSString *)sql {
     BOOL sqlT = [sql containsString:@":"];
     NSString *sql_format = sql;

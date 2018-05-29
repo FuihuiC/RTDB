@@ -15,10 +15,7 @@
 ///----------------------------------------------------------
 #pragma mark - RTSDBExtra
 @interface RTSDBExtra ()
-- (RTSDBExtra *(^)(NSString *, va_list *))queryArgs;
-
 - (instancetype)initWithDBManager:(RTDBDefault *)dbManager  withDefaultQueue:(dispatch_queue_t)q;
-
 @end
 
 ///----------------------------------------------------------
