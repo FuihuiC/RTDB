@@ -20,13 +20,15 @@
 @property (nonatomic, strong) NSArray *arrArgs;
 @property (nonatomic, strong) NSDictionary *params;
 @property (nonatomic, strong) NSString *workQueueLabel;
-@property (nonatomic, assign) BOOL backMain; // 是否回到主队列
+@property (nonatomic, assign) BOOL backMain; // Whether go back main;
 
 @property (nonatomic, strong) RTNext *next;
 
 // ---------------
 @property (nonatomic, strong) NSError *err;
 @property (nonatomic, assign) BOOL needSync;
+
+@property (nonatomic, assign) BOOL rollback; // Transaction rollback.
 @end
 
 @implementation RTSDBExtra
@@ -48,27 +50,6 @@
 }
 
 #pragma mark method
-- (void)threadLock:(rt_block_t)block {
-    if (!block) return;
-    
-    self.onWorkQueue(^(){
-        [self lock:block];
-    });
-}
-
-// goto synchronize
-- (void)lock:(rt_block_t)block {
-    if (!block) return;
-    
-    if (self->_semaphore == NULL) {
-        block();
-    } else {
-        dispatch_semaphore_wait(self->_semaphore, dispatch_time(DISPATCH_TIME_NOW, DISPATCH_TIME_FOREVER));
-        block();
-        dispatch_semaphore_signal(self->_semaphore);
-    }
-}
-
 // run in the queue last set.
 - (RTSDBExtra *(^)(rt_block_t))onWorkQueue {
     return ^RTSDBExtra *(rt_block_t block) {
@@ -77,7 +58,7 @@
         
         dispatch_semaphore_t sem = dispatch_semaphore_create(0);
         [self runOnWorkQueue:^{
-            [self lock:block];
+            block();
             dispatch_semaphore_signal(sem);
         }];
         dispatch_semaphore_wait(sem, dispatch_time(DISPATCH_TIME_NOW, DISPATCH_TIME_FOREVER));
@@ -214,7 +195,7 @@
 
 - (RTSDBExtra *(^)(NSString *))onOpen {
     return ^(NSString *path) {
-        return self.onOpenFlags(path, RT_SQLITE_OPEN_CREATE | RT_SQLITE_OPEN_READWRITE | RT_SQLITE_OPEN_NOMUTEX | RT_SQLITE_OPEN_SHAREDCACHE);
+        return self.onOpenFlags(path, RT_SQLITE_OPEN_CREATE | RT_SQLITE_OPEN_READWRITE | RT_SQLITE_OPEN_FULLMUTEX | RT_SQLITE_OPEN_SHAREDCACHE);
     };
 }
 
@@ -413,27 +394,58 @@
                 block();
             } @catch (NSException *exception) {
                 [self.dbManager rollback];
+                NSError *err;
+                rt_db_err(@"Transaction failed!", &err);
+                self.err = err;
             }
             [self.dbManager commit];
         });
     };
 }
 
-- (RTSDBExtra *)onBegin {
-    return self.onWorkQueue(^{
-        [self.dbManager begin];
-    });
+- (RTSDBExtra *(^)(rt_block_t))onTrans {
+    return ^(rt_block_t block) {
+        return self.onWorkQueue(^{
+            @try {
+                block();
+            } @catch (NSException *exception) {
+                NSError *err;
+                rt_db_err(@"Transaction failed!", &err);
+                self.err = err;
+                self.rollback = YES;
+            }
+        });
+    };
 }
 
-- (RTSDBExtra *)onCommit {
-    return self.onWorkQueue(^{
-        [self.dbManager commit];
-    });
+- (RTSDBExtra *(^)(void))onBegin {
+    return ^{
+        return self.onWorkQueue(^{
+            self.rollback = NO;
+            [self.dbManager begin];
+        });
+    };
 }
 
-- (RTSDBExtra *)onRollback {
-    return self.onWorkQueue(^{
-        [self.dbManager rollback];
-    });
+- (RTSDBExtra *(^)(void))onCommit {
+    return ^{
+        if (self.rollback) {
+            return self;
+        }
+        return self.onWorkQueue(^{
+            [self.dbManager commit];
+        });
+    };
+}
+
+- (RTSDBExtra *(^)(void))onRollback {
+    return ^{
+        if (!self.rollback) {
+            return self;
+        }
+        return self.onWorkQueue(^{
+            [self.dbManager rollback];
+        });
+    };
 }
 @end

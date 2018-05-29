@@ -21,7 +21,7 @@ typedef void(^rt_select_block_t)(NSArray *);
 @interface RTSDBExtra : NSObject
 
 #pragma mark Usual
-- (void)threadLock:(rt_block_t)block;
+
 // back to defaultQueue
 - (RTSDBExtra *)onDefault;
 - (RTSDBExtra *(^)(dispatch_queue_t))onQueue;
@@ -73,7 +73,7 @@ typedef void(^rt_select_block_t)(NSArray *);
 - (RTSDBExtra *(^)(NSString *, rt_select_block_t))onFetchObjs;
 
 #pragma mark Transaction
-- (RTSDBExtra *)onBegin;
-- (RTSDBExtra *)onCommit;
-- (RTSDBExtra *)onRollback;
+- (RTSDBExtra *(^)(void))onBegin;
+- (RTSDBExtra *(^)(void))onCommit;
+- (RTSDBExtra *(^)(void))onRollback;
 @end
