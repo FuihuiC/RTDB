@@ -11,6 +11,9 @@
 
 @interface RTSDB : NSObject
 
+/** RTDB manager */
+@property (nonatomic, strong) RTDBDefault *db;
+
 /**
  * If the defaultQueue is set, all operations will be executed on this queue
  * until a new queue is set up.

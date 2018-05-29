@@ -9,7 +9,7 @@
 #import "RTSDB.h"
 #import "RTDBDefault.h"
 
-#define RT_EXTRA [[RTSDBExtra alloc] initWithDBManager:self.dbManager withDefaultQueue:self.defaultQueue]
+#define RT_EXTRA [[RTSDBExtra alloc] initWithDBManager:self.db withDefaultQueue:self.defaultQueue]
 ///----------------------------------------------------------
 ///----------------------------------------------------------
 ///----------------------------------------------------------
@@ -25,16 +25,12 @@
 ///----------------------------------------------------------
 ///----------------------------------------------------------
 #pragma mark - RTSync
-@interface RTSDB ()
-@property (nonatomic, strong) RTDBDefault *dbManager;
-
-@end
 
 @implementation RTSDB
 
 - (instancetype)init {
     if (self = [super init]) {
-        _dbManager = [[RTDBDefault alloc] init];
+        _db = [[RTDBDefault alloc] init];
     }
     return self;
 }
@@ -74,6 +70,6 @@
 
 // -------------
 - (void)onClose {
-    [self.dbManager close];
+    [self.db close];
 }
 @end
