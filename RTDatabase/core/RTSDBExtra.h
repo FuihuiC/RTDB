@@ -13,7 +13,7 @@ typedef void(^rt_error_b_t)(NSError *error);
 
 typedef void(^rt_block_t)(void);
 typedef void(^rt_next_block_t)(RTNext *);
-typedef void(^rt_step_block_t)(NSDictionary *dic, int step, BOOL *stop);
+typedef void(^rt_step_block_t)(NSDictionary *, int, BOOL *);
 
 typedef void(^rt_select_block_t)(NSArray *);
 

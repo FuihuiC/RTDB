@@ -24,11 +24,6 @@
 @property (nonatomic, strong) dispatch_queue_t defaultQueue;
 
 /**
- * Operate about sqlite is suggested to be locked.
- */
-- (void)threadLock:(rt_block_t)block;
-
-/**
  * After call onQueue() or onMain(), all operate on the queue until
  * calling onQueue() again or call onMain()
  *

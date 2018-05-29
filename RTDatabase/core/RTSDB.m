@@ -9,7 +9,7 @@
 #import "RTSDB.h"
 #import "RTDBDefault.h"
 
-#define RT_EXTRA [[RTSDBExtra alloc] initWithDBManager:self.dbManager withSem:self->_semaphore withDefaultQueue:self.defaultQueue]
+#define RT_EXTRA [[RTSDBExtra alloc] initWithDBManager:self.dbManager withDefaultQueue:self.defaultQueue]
 ///----------------------------------------------------------
 ///----------------------------------------------------------
 ///----------------------------------------------------------
@@ -17,7 +17,7 @@
 @interface RTSDBExtra ()
 - (RTSDBExtra *(^)(NSString *, va_list *))queryArgs;
 
-- (instancetype)initWithDBManager:(RTDBDefault *)dbManager withSem:(dispatch_semaphore_t)semaphore withDefaultQueue:(dispatch_queue_t)q;
+- (instancetype)initWithDBManager:(RTDBDefault *)dbManager  withDefaultQueue:(dispatch_queue_t)q;
 
 @end
 
@@ -25,20 +25,15 @@
 ///----------------------------------------------------------
 ///----------------------------------------------------------
 #pragma mark - RTSync
-@interface RTSDB () {
-    dispatch_semaphore_t _semaphore;
-}
-
+@interface RTSDB ()
 @property (nonatomic, strong) RTDBDefault *dbManager;
 
-- (void(^)(rt_block_t))lock;
 @end
 
 @implementation RTSDB
 
 - (instancetype)init {
     if (self = [super init]) {
-        _semaphore = dispatch_semaphore_create(1);
         _dbManager = [[RTDBDefault alloc] init];
     }
     return self;
@@ -53,24 +48,6 @@
         if (q == NULL) return self.onMain;
         
         return RT_EXTRA.onQueue(q);
-    };
-}
-// ---
-- (void)threadLock:(rt_block_t)block {
-    self.lock(block);
-}
-
-- (void(^)(rt_block_t))lock {
-    return ^(rt_block_t block) {
-        if (!block) return;
-        
-        if (self->_semaphore == NULL) {
-            block();
-        } else {
-            dispatch_semaphore_wait(self->_semaphore, dispatch_time(DISPATCH_TIME_NOW, DISPATCH_TIME_FOREVER));
-            block();
-            dispatch_semaphore_signal(self->_semaphore);
-        }
     };
 }
 
@@ -97,8 +74,6 @@
 
 // -------------
 - (void)onClose {
-    [self threadLock:^{
-        [self.dbManager close];
-    }];
+    [self.dbManager close];
 }
 @end

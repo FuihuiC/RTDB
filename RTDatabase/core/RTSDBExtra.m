@@ -12,7 +12,6 @@
     va_list *_args;
     dispatch_queue_t _work_q;
     dispatch_queue_t _defaultQueue;
-    dispatch_semaphore_t _semaphore;
 }
 @property (nonatomic, weak) RTDBDefault *dbManager;
 
@@ -33,12 +32,11 @@
 
 @implementation RTSDBExtra
 
-- (instancetype)initWithDBManager:(RTDBDefault *)dbManager withSem:(dispatch_semaphore_t)semaphore withDefaultQueue:(dispatch_queue_t)q {
+- (instancetype)initWithDBManager:(RTDBDefault *)dbManager withDefaultQueue:(dispatch_queue_t)q {
     if (self = [super init]) {
         self.dbManager = dbManager;
         self->_defaultQueue = q;
         self->_work_q = q;
-        self->_semaphore = semaphore;
     }
     return self;
 }
