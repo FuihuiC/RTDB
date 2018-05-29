@@ -28,13 +28,13 @@ Open sqlite3 using the flags by default:
 ###### SQLITE_OPEN_CREATE | SQLITE_OPEN_READWRITE | SQLITE_OPEN_FULLMUTEX | SQLITE_OPEN_SHAREDCACHE   
 or you can customize the flags.
 
-```
-// init a RTDB instance.
-RTDB *db = [[RTDB alloc] init];
-```
-- OPEN  
+- OPEN 
+
 Before using RTDB, it must be opened.
 ```
+// init a RTDB instance.
+RTDB *db = [[RTDB alloc] init];  
+
 // Open DB
 NSError *err;
 BOOL result = [db openWithPath:@"~/RTDB.sqlite3" withError:&err];
@@ -42,7 +42,8 @@ if (!result) {
 NSLog(@"%@". err);
 }
 ```  
-- EXECUTE  
+- EXECUTE 
+
 If sql string do not have a `SELECT`, you may call methods begin with `execQuery` which return a value type of BOOL.  
 These methods are actually wrapper around `sqlite3_prepare_v2()`, `sqlite3_step()`, and `sqlite3_finalize()`.
 ```
@@ -89,10 +90,10 @@ NSLog(@"%@", dic);
 
 BOOL step = [next step]; // When sqlite3_step() == SQLITE_ROW, return YES.
 ```
-* RTDBDefault  
-RTDBDefault inherits RTDB, so all RTDB's method are enabled while using RTDBDefault.  
-RTDBDefault can create a table by class automaticly, and convert per row selected from table to an object Type of the class, which has the same name of the table. It is important to note that the class need have a property named "_id" and type of integer.  
+* RTDBDefault 
 
+RTDBDefault inherits RTDB, so all RTDB's methods are enabled while using RTDBDefault.  
+RTDBDefault can create a table by class automaticly, and convert per row selected from table to an object Type of the class, which has the same name of the table. It is important to note that the class need have a property named "_id" and type of integer.  `_id` is set as primary key;
 ```
 // init a RTDBDefault instance.
 RTDBDefault *defaultDB = [[RTDBDefault alloc] init];
@@ -125,6 +126,7 @@ fetchSql:@"SELECT * FROM DB order by _id" withError:&err];
 ```
 
 * RTSDB & RTSDBExtra  
+
 RTSDB & RTSDBExtra provide a chainable way of using RTDB & RTDBDefault.  
 When calling RTSDB instance's method, it will return a new RTSDBExtra instance. RTSDBExtra's instance methods are chainable.  
 
@@ -166,6 +168,7 @@ nil)
 .onError(^(NSError *err) {
 NSLog(@"%@", err);
 });
+
 // select
 db.onDefault
 .execArgs(@"SELECT * FROM DB", nil) 0))
@@ -217,6 +220,8 @@ NSLog(@"%@", dic);
 .onError(^(NSError *err) {
 NSLog(@"%@", err);
 });
+
+//
 db.onDefault
 .onFetchObjs(@"", ^(NSArray <DB *>*result) {
 for (DB *obj in result) {
@@ -245,6 +250,7 @@ NSLog(@"%@", err)
 ```
 
 * Asynchronous  
+
 RTSDB & RTSDBExtra provide an asynchronous scheme.  
 If set the RTSDB instance's `defaultQueue` typed of `dispatch_queue_t`, and then all operation will be called on this queue.  
 And you can call `onQueue()` or `onMain` change the queue next. The `onQueue()` and `onMain` will not change the defaultQueue.
