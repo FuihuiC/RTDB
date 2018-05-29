@@ -43,8 +43,18 @@ typedef void(^rt_column_enum_block_t)(const char *cname, id value);
 
 /**
  * error
- * 1000001: empty sql string.
+ * 101: empty sql string.
+ * 102: parameter error
+ * 103: class info error
+ * 104: object empty
+ * 105: primety key _id error
+ * 106: operate error
+ * 107: info from sql error
+ * 108: column error
+ * 109: block empty
+ * 110: transaction error
  *
+ * >=10000: error by sqlite3
  */
 RT_EXTERN void rt_error(
   NSString *errMsg, /* message */

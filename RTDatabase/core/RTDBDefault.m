@@ -55,7 +55,7 @@ typedef enum : NSUInteger {
     
     RTSQInfo *info = [self infoForClass:cls];
     if (!info) {
-        rt_error(@"RTDB get class info failure!", 1000003, err);
+        rt_error(@"RTDB get class info failure!", 103, err);
         return NO;
     }
     
@@ -76,18 +76,18 @@ typedef enum : NSUInteger {
 
 - (BOOL)baseOperate:(RTDBOperateMode)op withObj:(id)obj withError:(NSError * __autoreleasing *)err {
     if (obj == nil) {
-        rt_error(@"RTDB recieve an empty obj!", 1000004, err);
+        rt_error(@"RTDB recieve an empty obj!", 104, err);
         return NO;
     }
     
     RTSQInfo *info = [self infoForClass:[obj class]];
     if (!info) {
-        rt_error(@"RTDB get class info failure!", 1000003, err);
+        rt_error(@"RTDB get class info failure!", 103, err);
         return NO;
     }
     
     if (!info->_has_id) {
-        rt_error(@"RTDB can not find primety property '_id'!", 1000005, err);
+        rt_error(@"RTDB can not find primety property '_id'!", 105, err);
         return NO;
     }
     
@@ -98,7 +98,7 @@ typedef enum : NSUInteger {
         if (_id != -1) {
             _id++;
         } else {
-            rt_error(@"RTDB can not find primary key '_id' max value!", 1000005, err);
+            rt_error(@"RTDB can not find primary key '_id' max value!", 105, err);
             return NO;
         }
     }
@@ -117,7 +117,7 @@ typedef enum : NSUInteger {
     }
     
     if (sql == NULL) {
-        rt_error(@"RTDB can not find which column to operate!", 1000006, err);
+        rt_error(@"RTDB can not find which column to operate!", 106, err);
         return NO;
     }
     
@@ -187,7 +187,7 @@ typedef enum : NSUInteger {
     BOOL re = [self querySql:sql withError:err withCallback:^(void *stmt, Class cls, rt_pro_info *proInfo, BOOL cached, BOOL *stop) {
         
         if (cls == Nil) {
-            rt_error([NSString stringWithFormat:@"RTDB did not find a class from sql: %@", sql], 1000003, err);
+            rt_error([NSString stringWithFormat:@"RTDB did not find a class from sql: %@", sql], 103, err);
             *stop = YES;
             return;
         }
@@ -233,7 +233,7 @@ typedef enum : NSUInteger {
 
 - (BOOL)querySql:(NSString *)sql withError:(NSError * __autoreleasing *)err withCallback:(RT_DB_STEP_BLOCK)callback {
     if (!sql && sql.length == 0) {
-        rt_error(@"RTDB: sql should not be empty", 1000001, err);
+        rt_error(@"RTDB: sql should not be empty", 101, err);
         return NO;
     }
     
@@ -244,7 +244,7 @@ typedef enum : NSUInteger {
     
     Class cls = rt_column_class(stmt);
     if (cls == Nil) {
-        rt_error([NSString stringWithFormat:@"RTDB did not find class. - sql: %@", sql], 1000003, err);
+        rt_error([NSString stringWithFormat:@"RTDB did not find class. - sql: %@", sql], 103, err);
         rt_sqlite3_finalize(&stmt);
         return NO;
     }
@@ -252,7 +252,7 @@ typedef enum : NSUInteger {
     int count;
     rt_pro_info *proInfo = rt_column_pro_info(stmt, &count);
     if (proInfo == NULL) {
-        rt_error([NSString stringWithFormat:@"RTDB did not find pros info. - sql: %@", sql], 1000007, err);
+        rt_error([NSString stringWithFormat:@"RTDB did not find pros info. - sql: %@", sql], 107, err);
         rt_sqlite3_finalize(&stmt);
         return NO;
     }

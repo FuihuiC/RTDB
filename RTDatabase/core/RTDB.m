@@ -127,7 +127,7 @@
     DELog(@"RTDB: -sql: %@", sql);
     
     if (!sql || sql.length == 0) {
-        rt_error([NSString stringWithFormat:@"RTDB: empty sql!"], 1000001, err);
+        rt_error([NSString stringWithFormat:@"RTDB: empty sql!"], 101, err);
         return nil;
     }
     
@@ -178,7 +178,7 @@
             int idx = rt_sqlite3_bind_param_index(stmt, [key UTF8String]);
             id value = params[dickey];
             if (idx == 0) {
-                rt_error([NSString stringWithFormat:@"RTDB can not find a param for key: %@. -sql: %@", dickey, sql], 1000002, err);
+                rt_error([NSString stringWithFormat:@"RTDB can not find a param for key: %@. -sql: %@", dickey, sql], 102, err);
                 break;
             }
             rt_objc_t t = rt_object_class_type(value);
@@ -191,7 +191,7 @@
     
     if (boundCount != bindcount) {
         if (err != NULL && !(*err)) { // if no errmsg, build.
-            rt_error(@"RTDB recieved sql paramters count is not equal to args for bind!", 1000002, err);
+            rt_error(@"RTDB recieved sql paramters count is not equal to args for bind!", 102, err);
         }
         
         rt_sqlite3_finalize(&stmt);

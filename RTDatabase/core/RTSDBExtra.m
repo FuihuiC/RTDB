@@ -148,7 +148,7 @@
     return ^(rt_next_block_t b) {
         if (!b) {
             NSError *error;
-            rt_error(@"RTSync onStep(): arg block can not be NULL", 1000009, &error);
+            rt_error(@"RTSync onStep(): arg block can not be NULL", 109, &error);
             self.err = error;
             return self;
         } else {
@@ -166,7 +166,7 @@
     return ^(rt_step_block_t b) {
         if (!b) {
             NSError *error;
-            rt_error(@"RTSync onEnum(): arg block can not be NULL", 1000009, &error);
+            rt_error(@"RTSync onEnum(): arg block can not be NULL", 109, &error);
             self.err = error;
             return self;
         } else {
@@ -338,7 +338,7 @@
     return ^(NSString *sql, rt_select_block_t b) {
         if (!b) {
             NSError *error;
-            rt_error(@"RTSync onFetchDics(): arg block can not be NULL", 1000009, &error);
+            rt_error(@"RTSync onFetchDics(): arg block can not be NULL", 109, &error);
             self.err = error;
             return self;
         } else return self.onWorkQueue(^() {
@@ -361,7 +361,7 @@
     return ^(NSString *sql, rt_select_block_t b) {
         if (!b) {
             NSError *error;
-            rt_error(@"RTSync onFetchObjs(): arg block can not be NULL.", 1000009, &error);
+            rt_error(@"RTSync onFetchObjs(): arg block can not be NULL.", 109, &error);
             self.err = error;
             return self;
         } else return self.onWorkQueue(^() {
@@ -393,7 +393,7 @@
             } @catch (NSException *exception) {
                 [self.dbManager rollback];
                 NSError *err;
-                rt_error(@"Transaction failed!", 1000010, &err);
+                rt_error(@"Transaction failed!", 110, &err);
                 self.err = err;
             }
             [self.dbManager commit];
@@ -408,7 +408,7 @@
                 block();
             } @catch (NSException *exception) {
                 NSError *err;
-                rt_error(@"Transaction failed!", 1000010, &err);
+                rt_error(@"Transaction failed!", 110, &err);
                 self.err = err;
                 self.rollback = YES;
             }
