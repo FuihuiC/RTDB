@@ -34,7 +34,7 @@ typedef enum : NSUInteger {
 }
 
 // Get a RTSQInfo object which cahced the model class info.
-- (RTSQInfo *)infoForClass:(Class)cls {
+- (RTSQInfo *)infoForClass:(Class)cls withError:(NSError *__autoreleasing*)error {
     NSString *clsName = [NSString stringWithUTF8String:rt_class_name(cls)];
     if (!clsName || clsName.length == 0) return nil;
     
@@ -42,8 +42,16 @@ typedef enum : NSUInteger {
     
     RTSQInfo *info = _mDicTablesCache[clsName];
     if (!info) {
-        info = [[RTSQInfo alloc] initWithClass:cls];
-        _mDicTablesCache[clsName] = info;
+        NSError *err;
+        info = [[RTSQInfo alloc] initWithClass:cls withError:&err];
+        if (!err) {
+            _mDicTablesCache[clsName] = info;
+        } else {
+            info = nil;
+            if (error != NULL) {
+                *error = err;
+            }
+        }
     }
     
     dispatch_semaphore_signal(_semaphore);
@@ -53,13 +61,16 @@ typedef enum : NSUInteger {
 
 - (BOOL)creatTable:(Class)cls withError:(NSError * __autoreleasing *)err {
     
-    RTSQInfo *info = [self infoForClass:cls];
+    RTSQInfo *info = [self infoForClass:cls withError:err];
+
     if (!info) {
-        rt_error(@"RTDB get class info failure!", 103, err);
+        if (err != NULL && *err == nil) {
+            rt_error(@"RTDB get class info failure!", 103, err);
+        }
         return NO;
     }
     
-    return rt_sqlite3_exec(self->_db, info->_creat, err);
+    return rt_sqlite3_exec(self->_db, [info creatSql], err);
 }
 
 - (BOOL)insertObj:(id)obj withError:(NSError * __autoreleasing *)err {
@@ -80,9 +91,12 @@ typedef enum : NSUInteger {
         return NO;
     }
     
-    RTSQInfo *info = [self infoForClass:[obj class]];
+    RTSQInfo *info = [self infoForClass:[obj class] withError:err];
+
     if (!info) {
-        rt_error(@"RTDB get class info failure!", 103, err);
+        if (err != NULL && *err == nil) {
+            rt_error(@"RTDB get class info failure!", 103, err);
+        }
         return NO;
     }
     
@@ -94,7 +108,7 @@ typedef enum : NSUInteger {
     // get max _id before insert
     NSInteger _id = -1;
     if (op == op_insert) {
-        _id = rt_get_primary_id(self->_db, info->_maxid, err);
+        _id = rt_get_primary_id(self->_db, [info maxidSql], err);
         if (_id != -1) {
             _id++;
         } else {
@@ -106,7 +120,7 @@ typedef enum : NSUInteger {
     // prepare sql
     rt_char_t *sql = NULL;
     if (op == op_insert) {
-        sql = info->_insert;
+        sql = [info insertSql];
     } else {
         NSInteger idx = [[obj valueForKey:@"_id"] integerValue];
         if (op == op_update) {
@@ -133,9 +147,17 @@ typedef enum : NSUInteger {
     // bind obj value to sqlite3
     if (op != op_delete) {
         rt_pro_info *proInfo = info->_prosInfo;
-        rt_enum_info(proInfo, ^(rt_pro_info *pro) {
+        
+        for (rt_pro_info *pro = proInfo; pro != NULL; pro = pro->next) {
+            
+            int i = pro->idx;
+            rt_char_t *o = pro->name;
+            char t = pro->t;
+            printf("%d\n", i);
+            printf("%s\n", o);
+            printf("%c\n", t);
             rt_sqlite3_bind(stmt, pro->idx, [obj valueForKey:[NSString stringWithUTF8String:pro->name]], pro->t);
-        });
+        }
     }
     
     BOOL res = rt_sqlite3_step(stmt, err);
@@ -158,7 +180,8 @@ typedef enum : NSUInteger {
     BOOL re = [self querySql:sql withError:err withCallback:^(void *stmt, Class cls, rt_pro_info *proInfo, BOOL cached, BOOL *stop) {
         NSMutableDictionary *mDic = [NSMutableDictionary dictionary];
         
-        rt_enum_info(proInfo, ^(rt_pro_info *pro) {
+        
+        for (rt_pro_info *pro = proInfo; pro != NULL; pro = pro->next) {
             rt_objc_t t;
             if (rt_str_compare(pro->name, "_id")) {
                 t = rtlong;
@@ -170,7 +193,8 @@ typedef enum : NSUInteger {
             id value = rt_sqlite3_column(stmt, pro->idx, t);
             NSString *name = [NSString stringWithUTF8String:pro->name];
             mDic[name] = value;
-        });
+        }
+        
         if (mDic.count > 0) {
             [mArr addObject:mDic.copy];
         }
@@ -193,8 +217,7 @@ typedef enum : NSUInteger {
         }
         
         id obj = [[cls alloc] init];
-        
-        rt_enum_info(proInfo, ^(rt_pro_info *pro) {
+        for (rt_pro_info *pro = proInfo; pro != NULL; pro = pro->next) {
             rt_objc_t t;
             if (rt_str_compare(pro->name, "_id")) {
                 t = rtlong;
@@ -220,7 +243,7 @@ typedef enum : NSUInteger {
 #pragma clang diagnostic pop
                 [obj setValue:value forKey:name];
             }
-        });
+        }
         if (obj) {
             [mArr addObject:obj];
         }
@@ -257,7 +280,8 @@ typedef enum : NSUInteger {
         return NO;
     }
     
-    RTSQInfo *sqInfo = [self infoForClass:cls];
+    RTSQInfo *sqInfo = [self infoForClass:cls withError:nil];
+
     BOOL cached = (rt_pro_t_assign(sqInfo->_prosInfo, &proInfo, NULL) == 1);
     
     int result = -1;

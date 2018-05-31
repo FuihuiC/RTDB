@@ -20,17 +20,20 @@ RT_EXTERN rt_char_t *rt_class_name(Class cls);
 @interface RTSQInfo : NSObject {
     @public
     BOOL        _has_id;    // if the model class has property named _id and _id is the type of integer, _has_id = YES.
-    char        *_clsName;  // class name
-    char        *_creat;    // creat sql
-    char        *_insert;   // insert sql
-    char        *_update;   // update sql
-    char        *_delete;   // delete sql
-    char        *_maxid;    // max _id sql
     rt_pro_info *_prosInfo; // property infomation for RTDB
 }
 
+@property (nonatomic, strong) Class cls;
+
+
+- (instancetype)initWithClass:(Class)cls withError:(NSError *__autoreleasing*)error;
 - (instancetype)initWithClass:(Class)cls;
 
+
+- (rt_char_t *)className;
+- (rt_char_t *)creatSql;
+- (rt_char_t *)insertSql;
+- (rt_char_t *)maxidSql;
 /**
  Method make the update sql complete.
 

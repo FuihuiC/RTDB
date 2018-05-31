@@ -66,6 +66,29 @@ typedef enum : char {
 static size_t char_len = sizeof(char);
 
 #pragma mark - FUNCTION
+/**
+ * error
+ * 101: empty sql string.
+ * 102: parameter error
+ * 103: class info error
+ * 104: object empty
+ * 105: primety key _id error
+ * 106: operate error
+ * 107: info from sql error
+ * 108: column error
+ * 109: block empty
+ * 110: transaction error
+ *
+ * >=10000: error by sqlite3
+ */
+RT_EXTERN void rt_error(
+  NSString *errMsg, /* message */
+  int code,         /* err code */
+  NSError **err     /* OUT: NSError */
+);
+
+
+
 /** Get the number of digits of integer */
 RT_EXTERN int rt_integer_digit(long long n);
 /** Whether two strings are equal */
@@ -78,7 +101,7 @@ RT_EXTERN char *rt_str_mutable(const char *src);
  * After the end of the use, free is needed.
  */
 RT_EXTERN char *rt_strcat(char *str1, char *str2) ;
-
+RT_EXTERN void rt_str_append_v(char **dest, ...);
 /** Stitching strings together */
 RT_EXTERN void rt_str_append(
   char **dest, /* Stitching result pointer */

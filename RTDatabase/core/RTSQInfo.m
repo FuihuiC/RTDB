@@ -20,6 +20,9 @@ static rt_char_t *rt_sqlite3_bind_type(rt_char_t c);
 /** confirm the class's property _id form superclass */
 static BOOL rt_confirm_class_pro_id(Class cls);
 
+static int rt_prepare_info(Class cls, rt_pro_info_p *proInfos, NSError **err);
+static int rt_class_info_v(Class cls, int count, rt_pro_info_p *infos, BOOL *has_id);
+
 /** mode class info */
 static void rt_class_info(Class cls, BOOL *has_id, char **className, rt_pro_info_p *proInfos, char **creat, char **insert, char **update, char **delete);
 
@@ -184,9 +187,75 @@ static void rt_free(void *src) {
     src = 0x00;
 }
 
+static int rt_class_info_v(Class cls, int count, rt_pro_info_p *infos, BOOL *has_id) {
+    
+    const char *clsName = class_getName(cls);
+    
+    if (cls == Nil || !clsName || strcmp(clsName, "NSObject") == 0) {
+        return count;
+    }
+    
+    unsigned int outCount;
+    objc_property_t *proList = class_copyPropertyList(cls, &outCount);
+    if (outCount == 0) {
+        free(proList);
+        return count;
+    }
+    
+    int columnIdx = count;
+    for (int i = 0; i < outCount; i++) {
+        objc_property_t pro = proList[i];
+        
+        rt_char_t *cn = property_getName(pro);
+        
+        if (strlen(cn) == 0) continue;
+        
+        rt_objc_t t = rt_object_type(property_getAttributes(pro));
+        if (t == 0) continue; // unkown type
+        
+        if (strcmp(cn, "_id") == 0) {
+            if (has_id != NULL) {
+                *has_id = YES;
+            }
+            continue;
+        }
+        
+        // pro info
+        rt_pro_info *next = rt_make_info(columnIdx + 1, t, cn);
+        // sql
+        rt_info_append(infos, next);
+        
+        columnIdx++;
+    }
+    
+    return rt_class_info_v(class_getSuperclass(cls), columnIdx, infos, has_id);
+}
+
+
+static int rt_prepare_info(Class cls, rt_pro_info_p *proInfos, NSError **err) {
+    
+    rt_pro_info *infos = NULL;
+    BOOL hasID = NO;
+    int count = rt_class_info_v(cls, 0, &infos, &hasID);
+    
+    if (!hasID) {
+        rt_error(@"RTDB can not find _id!", 105, err);
+        if (infos != NULL) {
+            rt_free_info(infos);
+        }
+        return 0;
+    }
+    if (proInfos) {
+        *proInfos = infos;
+    }
+    return count;
+}
+
 static void rt_class_info(Class cls, BOOL *has_id, char **className, rt_pro_info_p *proInfos, char **creat, char **insert, char **update, char **delete) {
     
     rt_char_t *clsName = class_getName(cls);
+    
+    rt_pro_info *infos = NULL;
     
     unsigned int outCount;
     objc_property_t *proList = class_copyPropertyList(cls, &outCount);
@@ -198,8 +267,6 @@ static void rt_class_info(Class cls, BOOL *has_id, char **className, rt_pro_info
     rt_char_t *insert_pros[outCount + 1];
     rt_char_t *creat_pros_ts[outCount + 1];
     rt_char_t *update_pros[outCount + 1];
-    
-    rt_pro_info *infos = NULL;
     
     int columnIdx = 0;
     for (int i = 0; i < outCount; i++) {
@@ -332,33 +399,131 @@ static void rt_class_info(Class cls, BOOL *has_id, char **className, rt_pro_info
 //////////////////////////////////////////////////////
 #pragma mark - @implementation RTSQInfo
 //////////////////////////////////////////////////////
-@implementation RTSQInfo
 
+@interface RTSQInfo () {
+    char        *_clsName;  // class name
+    char        *_creat;    // creat sql
+    char        *_insert;   // insert sql
+    char        *_update;   // update sql
+    char        *_delete;   // delete sql
+    char        *_maxid;    // max _id sql
+}
+@property (nonatomic, assign) int count;
+@end
+
+@implementation RTSQInfo
 - (instancetype)initWithClass:(Class)cls {
     if (self = [super init]) {
         _has_id = NO;
         rt_class_info(cls, &_has_id, &_clsName, &_prosInfo, &_creat, &_insert, &_update, &_delete);
         
         char *maxid = NULL;
-        rt_str_append(&maxid, 2, "SELECT MAX(_id) FROM ", _clsName);
+        rt_str_append_v(&maxid, "SELECT MAX(_id) FROM ", _clsName, NULL);
         _maxid = maxid;
     }
     return self;
 }
 
+- (instancetype)initWithClass:(Class)cls withError:(NSError *__autoreleasing*)error {
+    if (self = [super init]) {
+        _cls = cls;
+        NSError *err;
+        _count = rt_prepare_info(cls, &_prosInfo, &err);
+        if (!err) {
+            _has_id = YES;
+        } else {
+            if (error != NULL) {
+                *error = err;
+            }
+        }
+    }
+    return self;
+}
+
+- (rt_char_t *)className {
+    if (_clsName == NULL) {
+        _clsName = (char *)class_getName(_cls);
+    }
+    return _clsName;
+}
+
+- (rt_char_t *)maxidSql {
+    if (_maxid == NULL) {
+        rt_str_append_v(&_maxid, "SELECT MAX(_id) FROM ", [self className], NULL);
+    }
+    return _maxid;
+}
+
+- (rt_char_t *)creatSql {
+    if (_creat == NULL) {
+        rt_str_append_v(&_creat, "CREATE TABLE if not exists '", [self className], "' ('_id' integer primary key autoincrement not null", NULL);
+        for (rt_pro_info *pro = _prosInfo; pro != NULL; pro = pro->next) {
+            rt_char_t *bindT = rt_sqlite3_bind_type(pro->t);
+            rt_str_append_v(&self->_creat, ", '", pro->name, "' '", bindT, "'", NULL);
+        }
+       
+        rt_str_append_v(&_creat, ")", NULL);
+    }
+    return _creat;
+}
+
+- (rt_char_t *)insertSql {
+    if (_insert == NULL) {
+        rt_str_append_v(&_insert, "INSERT INTO ", [self className], "(", NULL);
+        char *names = NULL;
+        char *values = NULL;
+        
+        int i = 0;
+        for (rt_pro_info *pro = _prosInfo; pro != NULL; pro = pro->next) {
+            BOOL end = ((self->_count - 1) == i);
+            
+            rt_str_append_v(&names, pro->name, end ? ")" : ", ", NULL);
+            rt_str_append_v(&values, ":", pro->name,  end ? ")" : ", ", NULL);
+            
+            i++;
+        }
+        
+        if (names != NULL && values != NULL) {
+            rt_str_append_v(&_insert, names, " VALUES (", values, NULL);
+        }
+    }
+    return _insert;
+}
+
+- (rt_char_t *)updateSql {
+    if (_update == nil) {
+        int i = 0;
+        rt_str_append_v(&_update, "UPDATE ", [self className], " SET ", NULL);
+        for (rt_pro_info *pro = _prosInfo; pro != NULL; pro = pro->next) {
+            BOOL end = ((self.count - 1) == i);
+            rt_str_append_v(&self->_update, pro->name, end ? " = ?" : " = ?, ", NULL);
+            i++;
+        }
+        rt_str_append(&_update, 1, " WHERE _id = ", NULL);
+    }
+    return _update;
+}
+
+- (rt_char_t *)deleteSql {
+    if (_delete == nil) {
+        rt_str_append_v(&_delete, "DELETE FROM ", [self className], " WHERE _id = ", NULL);
+    }
+    return _delete;
+}
+
 - (rt_char_t *)updateSqlWithID:(NSInteger)_id {
-    if (_creat == NULL)  return NULL;
+    if ([self updateSql] == NULL)  return NULL;
     
-    char *updateSql = (char *)calloc((strlen(_update) + rt_integer_digit(_id)), char_len);
-    sprintf(updateSql, "%s%ld", _update, (long)_id);
+    char *updateSql = (char *)calloc((strlen([self updateSql]) + rt_integer_digit(_id)), char_len);
+    sprintf(updateSql, "%s%ld", [self updateSql], (long)_id);
     return (rt_char_t *)updateSql;
 }
 
 - (rt_char_t *)deleteSqlWithID:(NSInteger)_id {
-    if (_delete == NULL) return NULL;
+    if ([self deleteSql] == NULL) return NULL;
     
-    char *deleteSql = (char *)calloc((strlen(_delete) + rt_integer_digit(_id)), char_len);
-    sprintf(deleteSql, "%s%ld", _delete, (long)_id);
+    char *deleteSql = (char *)calloc((strlen([self deleteSql]) + rt_integer_digit(_id)), char_len);
+    sprintf(deleteSql, "%s%ld", [self deleteSql], (long)_id);
     return (rt_char_t *)deleteSql;
 }
 

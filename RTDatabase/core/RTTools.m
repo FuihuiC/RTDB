@@ -10,6 +10,49 @@
 #include <stdlib.h>
 #include <string.h>
 #import "RTPreset.h"
+typedef struct RT_CHAR_STR rt_char_str, *rt_char_str_p;
+
+struct RT_CHAR_STR {
+    char *src;
+    size_t len;
+    rt_char_str *next;
+};
+
+static rt_char_str *rt_str_creat(char *src) {
+    if (src == NULL) {
+        return NULL;
+    }
+    rt_char_str *node = (rt_char_str *)malloc(sizeof(rt_char_str));
+    if (node == NULL) {
+        return NULL;
+    }
+    node->src = src;
+    node->len = strlen(src);
+    node->next = NULL;
+    return node;
+}
+
+static void rt_str_node_append(rt_char_str_p *node, char *src) {
+    NSCAssert(node != NULL, @"node can not be NULL!");
+    
+    if (*node == NULL) {
+        *node = rt_str_creat(src);
+    } else {
+        rt_str_node_append(&((*node)->next), src);
+    }
+}
+
+static void rt_str_free_node(rt_char_str *node) {
+    if (node == NULL) {
+        return;
+    } else {
+        if (node->next != NULL) {
+            rt_str_free_node(node->next);
+        }
+        free(node);
+        node = 0x0;
+    }
+}
 
 
 // Get the number of digits of integer
@@ -69,6 +112,52 @@ char *rt_strcat(char *str1, char *str2) {
         memmove(result + len_1 + len_2, "\0", sizeof(char));
     }
     return result;
+}
+
+void rt_str_append_v(char **dest, ...) {
+    
+    if (dest == NULL) return;
+    
+    size_t char_len = sizeof(char);
+    
+    va_list ap;
+    va_start(ap, dest);
+    size_t len = 0;
+    if (*dest != NULL) {
+        len += strlen(*dest);
+    }
+    rt_char_str *node = NULL;
+    for (char *src = va_arg(ap, char *); src != NULL; src = va_arg(ap, char *)) {
+        len += strlen(src);
+        rt_str_node_append(&node, src);
+    }
+    va_end(ap);
+    
+    char *result = (char *)malloc(len * char_len);
+    if (result == NULL) {
+        return;
+    }
+    len = 0;
+    if (*dest != NULL) {
+        memmove(result, *dest, strlen(*dest));
+        len += strlen(*dest);
+    }
+    
+    for (rt_char_str *n = node; n != NULL; n = n->next) {
+        memmove(result + len, n->src, n->len);
+        len += n->len;
+    }
+    
+    *dest = realloc(*dest, len + 1);
+    memmove(*dest, result, len);
+    memmove(*dest + len, "\0", char_len);
+    
+    
+    if (result != NULL) {
+        free(result);
+        result = 0x0;
+    }
+    rt_str_free_node(node);
 }
 
 // Stitching strings together

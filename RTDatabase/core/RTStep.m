@@ -310,8 +310,7 @@ void rt_sqlite3_finalize(void **stmt) {
 //////////////////////////
 //////////////////////////
 void rt_column_enum(void *stmt, rt_pro_info *proInfo, rt_column_enum_block_t block) {
-    
-    rt_enum_info(proInfo, ^(rt_pro_info *pro) {
+    for (rt_pro_info *pro = proInfo; pro != NULL; pro = pro->next) {
         rt_objc_t t;
         if (pro->t) {
             t = pro->t;
@@ -319,7 +318,7 @@ void rt_column_enum(void *stmt, rt_pro_info *proInfo, rt_column_enum_block_t blo
             t = rt_column_type(stmt, pro->idx);
         }
         rt_sqlite3_column(stmt, pro->idx, t);
-    });
+    }
 }
 
 Class rt_column_class(void *stmt) {
