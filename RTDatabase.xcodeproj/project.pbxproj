@@ -10,7 +10,6 @@
 		27256BAF20B56E5600E37D3D /* RTSDBExtra.h in Headers */ = {isa = PBXBuildFile; fileRef = 27256BAD20B56E5600E37D3D /* RTSDBExtra.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		27256BB020B56E5600E37D3D /* RTSDBExtra.m in Sources */ = {isa = PBXBuildFile; fileRef = 27256BAE20B56E5600E37D3D /* RTSDBExtra.m */; };
 		27A092E520C1176F00194C4D /* RTFDB.swift in Sources */ = {isa = PBXBuildFile; fileRef = 27A092E420C1176F00194C4D /* RTFDB.swift */; };
-		27A092E920C1473900194C4D /* RTFDBProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 27A092E820C1473900194C4D /* RTFDBProtocol.swift */; };
 		655704EF20A82039004238C0 /* RTDatabase.h in Headers */ = {isa = PBXBuildFile; fileRef = 655704ED20A82039004238C0 /* RTDatabase.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		6557050420A8210B004238C0 /* RTPreset.h in Headers */ = {isa = PBXBuildFile; fileRef = 655704F620A8210B004238C0 /* RTPreset.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		6557050520A8210B004238C0 /* RTSDB.m in Sources */ = {isa = PBXBuildFile; fileRef = 655704F720A8210B004238C0 /* RTSDB.m */; };
@@ -32,7 +31,6 @@
 		27256BAD20B56E5600E37D3D /* RTSDBExtra.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RTSDBExtra.h; sourceTree = "<group>"; };
 		27256BAE20B56E5600E37D3D /* RTSDBExtra.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = RTSDBExtra.m; sourceTree = "<group>"; };
 		27A092E420C1176F00194C4D /* RTFDB.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RTFDB.swift; sourceTree = "<group>"; };
-		27A092E820C1473900194C4D /* RTFDBProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RTFDBProtocol.swift; sourceTree = "<group>"; };
 		655704EA20A82039004238C0 /* RTDatabase.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = RTDatabase.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		655704ED20A82039004238C0 /* RTDatabase.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RTDatabase.h; sourceTree = "<group>"; };
 		655704EE20A82039004238C0 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -109,7 +107,6 @@
 				27256BAD20B56E5600E37D3D /* RTSDBExtra.h */,
 				27256BAE20B56E5600E37D3D /* RTSDBExtra.m */,
 				27A092E420C1176F00194C4D /* RTFDB.swift */,
-				27A092E820C1473900194C4D /* RTFDBProtocol.swift */,
 			);
 			path = core;
 			sourceTree = "<group>";
@@ -208,7 +205,6 @@
 				6557050520A8210B004238C0 /* RTSDB.m in Sources */,
 				6557050E20A8210B004238C0 /* RTInfo.m in Sources */,
 				6557050720A8210B004238C0 /* RTDB.m in Sources */,
-				27A092E920C1473900194C4D /* RTFDBProtocol.swift in Sources */,
 				6557050820A8210B004238C0 /* RTDBDefault.m in Sources */,
 				27A092E520C1176F00194C4D /* RTFDB.swift in Sources */,
 			);

@@ -8,23 +8,25 @@
 
 import Foundation
 
-public class RTFDB {
-    public let db = RTDBDefault()
+open class RTFDB {
+    public let db = RTDB()
     public var defaultQueue = DispatchQueue.main
     
-    func onDefault() -> RTFDBExtra {
+    public init() {}
+    
+    public func onDefault() -> RTFDBExtra {
         return RTFDBExtra(db, defaultQueue)
     }
     
-    func onMain() -> RTFDBExtra {
+    public func onMain() -> RTFDBExtra {
         return RTFDBExtra(db, defaultQueue)
     }
     
-    func onQueue(_ q: DispatchQueue) -> RTFDBExtra {
+    public func onQueue(_ q: DispatchQueue) -> RTFDBExtra {
         return RTFDBExtra(db, defaultQueue)
     }
     
-    func onClose() {
+    public func onClose() {
         db.close()
     }
 }
@@ -33,13 +35,13 @@ typealias rt_sw_closure_t = ()->Void
 
 public class RTFDBExtra {
     fileprivate var defaultQueue: DispatchQueue!
-    fileprivate var db: RTDBDefault!
+    fileprivate var db: RTDB!
     fileprivate var workQ: DispatchQueue?
     fileprivate var backMain = false
     fileprivate var error: Error?
     fileprivate var next: RTNext?
     
-    init(_ db: RTDBDefault, _ defaultQueue: DispatchQueue) {
+    init(_ db: RTDB, _ defaultQueue: DispatchQueue) {
         self.db = db
         self.defaultQueue = defaultQueue
     }
@@ -61,9 +63,12 @@ public class RTFDBExtra {
     }
     
     public func onError(_ closure: @escaping (Error?)->Void) {
-        closure(self.error)
+        if self.error != nil {
+            closure(self.error)
+        }
     }
     
+    // ------------------------------
     
     public func onOpen(_ path: String) -> RTFDBExtra {
         return self.onOpenFlags(path, RT_SQLITE_OPEN_CREATE | RT_SQLITE_OPEN_READWRITE | RT_SQLITE_OPEN_FULLMUTEX | RT_SQLITE_OPEN_SHAREDCACHE)
@@ -95,40 +100,6 @@ public class RTFDBExtra {
             self.exec(sql, nil, Array(arrArgs))
         }
     }
-    
-    // -------------
-    public func onCreat(_ cls: AnyClass) -> RTFDBExtra {
-        return self.onWorkQueue {
-            self.tableCreat(cls)
-        }
-    }
-    
-    public func onInsert(_ obj: AnyObject) -> RTFDBExtra {
-        return self.onWorkQueue {
-            self.insert(obj)
-        }
-    }
-    
-    public func onUpdate(_ obj: AnyObject) -> RTFDBExtra {
-        return self.onWorkQueue {
-            self.update(obj)
-        }
-    }
-    
-    public func onDelete(_ obj: AnyObject) -> RTFDBExtra {
-        return self.onWorkQueue {
-            self.delete(obj)
-        }
-    }
-    
-    public func onFetch(_ sql: String, _ closure: @escaping ([Any]?)->Void) -> RTFDBExtra {
-        return self.onWorkQueue {
-            let result = self.selectObj(sql)
-            if result != nil {
-                closure(result)
-            }
-        }
-    }
 }
 
 extension RTFDBExtra {
@@ -154,48 +125,6 @@ extension RTFDBExtra {
             self.error = err
         }
         self.next = next
-    }
-    
-    fileprivate func tableCreat(_ cls: AnyClass) {
-        do {
-            try self.db.creatTable(cls)
-        } catch let err {
-            self.error = err
-        }
-    }
-    
-    fileprivate func insert(_ obj: AnyObject) {
-        do {
-            try self.db.insertObj(obj)
-        } catch let err {
-            self.error = err
-        }
-    }
-    
-    fileprivate func update(_ obj: AnyObject) {
-        do {
-            try self.db.updateObj(obj)
-        } catch let err {
-            self.error = err
-        }
-    }
-    
-    fileprivate func delete(_ obj: AnyObject) {
-        do {
-            try self.db.deleteObj(obj)
-        } catch let err {
-            self.error = err
-        }
-    }
-    
-    fileprivate func selectObj(_ sql: String) -> [Any]? {
-        var result: [Any]?
-        do {
-            result = try self.db.fetchObjSql(sql)
-        } catch let err {
-            self.error = err
-        }
-        return result
     }
 }
 

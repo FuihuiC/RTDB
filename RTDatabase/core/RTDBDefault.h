@@ -8,6 +8,7 @@
 
 #import "RTDB.h"
 
+NS_SWIFT_UNAVAILABLE("")
 @interface RTDBDefault : RTDB
 /**
  Building a table based on the model class

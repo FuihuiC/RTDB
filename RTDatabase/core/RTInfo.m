@@ -212,6 +212,14 @@ static int rt_prepare_info(Class cls, rt_pro_info_p *proInfos, NSError **err) {
     BOOL hasID = NO;
     int count = rt_class_info_v(cls, 0, &infos, &hasID);
     
+    if (count == 0) {
+        rt_error(@"RTDB can not find properties from class!", 103, err);
+        if (infos != NULL) {
+            rt_free_info(infos);
+        }
+        return 0;
+    }
+    
     if (!hasID) {
         rt_error(@"RTDB can not find _id!", 105, err);
         if (infos != NULL) {
