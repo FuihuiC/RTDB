@@ -8,7 +8,6 @@
 
 #ifndef RTPreset_h
 #define RTPreset_h
-
 #define RT_SQLITE_ERROR 0
 #define RT_SQLITE_OK 1
 #define RT_SQLITE_DONE 2
@@ -35,7 +34,7 @@
 #   endif
 #endif
 
-
+@class NSString, NSError;
 
 typedef void(^rt_operator_b)(void);
 

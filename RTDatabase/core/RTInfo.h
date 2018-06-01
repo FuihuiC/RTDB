@@ -1,5 +1,5 @@
 //
-//  RTSQInfo.h
+//  RTInfo.h
 //  RTSQLite
 //
 //  Created by ENUUI on 2018/5/3.
@@ -15,9 +15,9 @@ RT_EXTERN rt_objc_t rt_object_class_type(id obj);
 
 RT_EXTERN rt_char_t *rt_class_name(Class cls);
 
-#pragma mark - @interface RTSQInfo
+#pragma mark - @interface RTInfo
 /** Caching information about the model class. */
-@interface RTSQInfo : NSObject {
+@interface RTInfo : NSObject {
     @public
     BOOL        _has_id;    // if the model class has property named _id and _id is the type of integer, _has_id = YES.
     rt_pro_info *_prosInfo; // property infomation for RTDB

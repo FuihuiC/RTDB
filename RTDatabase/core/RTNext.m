@@ -7,7 +7,7 @@
 //
 
 #import "RTNext.h"
-#import "RTStep.h"
+#import "RTDBFunc.h"
 
 @interface RTNext () {
     void *_stmt;

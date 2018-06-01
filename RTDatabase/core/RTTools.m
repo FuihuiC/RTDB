@@ -33,8 +33,7 @@ static rt_char_str *rt_str_creat(char *src) {
 }
 
 static void rt_str_node_append(rt_char_str_p *node, char *src) {
-    NSCAssert(node != NULL, @"node can not be NULL!");
-    
+ 
     if (*node == NULL) {
         *node = rt_str_creat(src);
     } else {

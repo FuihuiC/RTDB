@@ -1,12 +1,12 @@
 //
-//  RTStep.m
+//  RTDBFunc.m
 //  RTSQLite
 //
 //  Created by ENUUI on 2018/5/3.
 //  Copyright © 2018年 ENUUI. All rights reserved.
 //
 
-#import "RTStep.h"
+#import "RTDBFunc.h"
 #import <sqlite3.h>
 
 #pragma mark -

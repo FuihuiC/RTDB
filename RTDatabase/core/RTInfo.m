@@ -1,12 +1,12 @@
 //
-//  RTSQInfo.m
+//  RTInfo.m
 //  RTSQLite
 //
 //  Created by ENUUI on 2018/5/3.
 //  Copyright © 2018年 ENUUI. All rights reserved.
 //
 
-#import "RTSQInfo.h"
+#import "RTInfo.h"
 #import <objc/runtime.h>
 
 
@@ -227,10 +227,10 @@ static int rt_prepare_info(Class cls, rt_pro_info_p *proInfos, NSError **err) {
 
 //////////////////////////////////////////////////////
 //////////////////////////////////////////////////////
-#pragma mark - @implementation RTSQInfo
+#pragma mark - @implementation RTInfo
 //////////////////////////////////////////////////////
 
-@interface RTSQInfo () {
+@interface RTInfo () {
     char        *_clsName;  // class name
     char        *_creat;    // creat sql
     char        *_insert;   // insert sql
@@ -241,7 +241,7 @@ static int rt_prepare_info(Class cls, rt_pro_info_p *proInfos, NSError **err) {
 @property (nonatomic, assign) int count;
 @end
 
-@implementation RTSQInfo
+@implementation RTInfo
 
 - (instancetype)initWithClass:(Class)cls withError:(NSError *__autoreleasing*)error {
     if (self = [super init]) {

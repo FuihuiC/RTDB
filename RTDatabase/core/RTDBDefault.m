@@ -20,7 +20,7 @@ typedef enum : NSUInteger {
 @interface RTDBDefault () {
     dispatch_semaphore_t _semaphore;
 }
-@property (nonatomic, strong) NSMutableDictionary<NSString *, RTSQInfo *> *mDicTablesCache;
+@property (nonatomic, strong) NSMutableDictionary<NSString *, RTInfo *> *mDicTablesCache;
 @end
 
 @implementation RTDBDefault
@@ -28,22 +28,22 @@ typedef enum : NSUInteger {
 - (instancetype)init {
     if (self = [super init]) {
         _semaphore = dispatch_semaphore_create(1);
-        _mDicTablesCache = [NSMutableDictionary<NSString *, RTSQInfo *> dictionary];
+        _mDicTablesCache = [NSMutableDictionary<NSString *, RTInfo *> dictionary];
     }
     return self;
 }
 
-// Get a RTSQInfo object which cahced the model class info.
-- (RTSQInfo *)infoForClass:(Class)cls withError:(NSError *__autoreleasing*)error {
+// Get a RTInfo object which cahced the model class info.
+- (RTInfo *)infoForClass:(Class)cls withError:(NSError *__autoreleasing*)error {
     NSString *clsName = [NSString stringWithUTF8String:rt_class_name(cls)];
     if (!clsName || clsName.length == 0) return nil;
     
     dispatch_semaphore_wait(_semaphore, dispatch_time(DISPATCH_TIME_NOW, DISPATCH_TIME_FOREVER));
     
-    RTSQInfo *info = _mDicTablesCache[clsName];
+    RTInfo *info = _mDicTablesCache[clsName];
     if (!info) {
         NSError *err;
-        info = [[RTSQInfo alloc] initWithClass:cls withError:&err];
+        info = [[RTInfo alloc] initWithClass:cls withError:&err];
         if (!err) {
             _mDicTablesCache[clsName] = info;
         } else {
@@ -61,7 +61,7 @@ typedef enum : NSUInteger {
 
 - (BOOL)creatTable:(Class)cls withError:(NSError * __autoreleasing *)err {
     
-    RTSQInfo *info = [self infoForClass:cls withError:err];
+    RTInfo *info = [self infoForClass:cls withError:err];
 
     if (!info) {
         if (err != NULL && *err == nil) {
@@ -91,7 +91,7 @@ typedef enum : NSUInteger {
         return NO;
     }
     
-    RTSQInfo *info = [self infoForClass:[obj class] withError:err];
+    RTInfo *info = [self infoForClass:[obj class] withError:err];
 
     if (!info) {
         if (err != NULL && *err == nil) {
@@ -273,7 +273,7 @@ typedef enum : NSUInteger {
         return NO;
     }
     
-    RTSQInfo *sqInfo = [self infoForClass:cls withError:nil];
+    RTInfo *sqInfo = [self infoForClass:cls withError:nil];
 
     BOOL cached = (rt_pro_t_assign(sqInfo->_prosInfo, &proInfo, NULL) == 1);
     
