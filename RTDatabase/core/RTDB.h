@@ -15,6 +15,7 @@
  * This class encapsulates the basic operations of SQLite.
  */
 @interface RTDB : NSObject  {
+    @public
     void *_db;
 }
 

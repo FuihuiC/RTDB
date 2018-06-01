@@ -180,7 +180,6 @@
 - (void (^)(rt_step_block_t))lockOnEnum {
     return ^(rt_step_block_t b) {
         __block NSError *error;
-        
         [self.next enumAllSteps:^(NSDictionary *dic, int step, BOOL *stop, NSError *err) {
             error = err;
             if (!err) b(dic, step, stop);

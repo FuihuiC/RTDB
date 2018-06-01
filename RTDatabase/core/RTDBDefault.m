@@ -149,13 +149,6 @@ typedef enum : NSUInteger {
         rt_pro_info *proInfo = info->_prosInfo;
         
         for (rt_pro_info *pro = proInfo; pro != NULL; pro = pro->next) {
-            
-            int i = pro->idx;
-            rt_char_t *o = pro->name;
-            char t = pro->t;
-            printf("%d\n", i);
-            printf("%s\n", o);
-            printf("%c\n", t);
             rt_sqlite3_bind(stmt, pro->idx, [obj valueForKey:[NSString stringWithUTF8String:pro->name]], pro->t);
         }
     }
