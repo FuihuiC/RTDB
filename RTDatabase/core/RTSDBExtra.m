@@ -257,7 +257,7 @@
     
     NSError *err = NULL;
     
-    RTNext *next = [self.dbManager execSql:sql withErr:&err withParams:params withArrArgs:arrArgs withArgs:(self->_args != NULL) ? *(self->_args) : NULL];
+    RTNext *next = [self.dbManager execSql:sql withParams:params withArrArgs:arrArgs withArgs:(self->_args != NULL) ? *(self->_args) : NULL withError:&err];
     
     self.next = next;
     if (self->_args != NULL) {
@@ -341,7 +341,10 @@
             self.err = error;
             return self;
         } else return self.onWorkQueue(^() {
-            b([self selectDics:sql]);
+            NSArray *result = [self selectDics:sql];
+            if (result) {
+                b(result);
+            }
         });
     };
 }
@@ -364,7 +367,10 @@
             self.err = error;
             return self;
         } else return self.onWorkQueue(^() {
-            b([self selectObjs:sql]);
+            NSArray *result = [self selectObjs:sql];
+            if (result) {
+                b(result);
+            }
         });
     };
 }

@@ -14,6 +14,6 @@ Pod::Spec.new do |s|
   
   s.license = "MIT"
 
-  s.source_files        = 'RTDatabase/RTDatabase.h', 'RTDatabase/core/*.{h,m}'
+  s.source_files        = 'RTDatabase/RTDatabase.h', 'RTDatabase/core/*.{h,m,swift}'
   s.public_header_files = 'RTDatabase/RTDatabase.h', 'RTDatabase/core/*.{h}'
 end

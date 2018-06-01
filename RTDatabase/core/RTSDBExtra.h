@@ -16,7 +16,7 @@ typedef void(^rt_step_block_t)(NSDictionary *, int, BOOL *);
 
 typedef void(^rt_select_block_t)(NSArray *);
 
-
+NS_SWIFT_UNAVAILABLE("Use RTSDBExtra instead!")
 @interface RTSDBExtra : NSObject
 
 #pragma mark Usual

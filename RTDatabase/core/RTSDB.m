@@ -7,7 +7,6 @@
 //
 
 #import "RTSDB.h"
-
 #define RT_EXTRA [[RTSDBExtra alloc] initWithDBManager:self.db withDefaultQueue:self.defaultQueue]
 ///----------------------------------------------------------
 ///----------------------------------------------------------

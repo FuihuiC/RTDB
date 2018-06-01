@@ -24,8 +24,8 @@
  * Create or open sqlite. based on the specified path.
  * @required: The path needs to end with the SQLite file.
  */
-- (BOOL)openWithPath:(NSString *)path withError:(NSError *__autoreleasing *)error;
-- (BOOL)openWithPath:(NSString *)path withFlags:(int)flags withError:(NSError *__autoreleasing *)error;
+- (BOOL)openWithPath:(NSString *)path withError:(NSError *__autoreleasing *)error NS_SWIFT_NAME(open(path:));
+- (BOOL)openWithPath:(NSString *)path withFlags:(int)flags withError:(NSError *__autoreleasing *)error NS_SWIFT_NAME(open(path:flags:));
 
 /**
  * Close the SQLite that has been opened
@@ -37,35 +37,41 @@
  * If you select the (withError:) method and pass in (NSError **) err, the error message is transmitted when the execution fails.
  * Select the appropriate method according to the different parameters outside the SQL statement.
  */
-- (BOOL)execQuery:(NSString *)sql, ... NS_REQUIRES_NIL_TERMINATION;
-- (BOOL)exceWithError:(NSError *__autoreleasing *)err withQuery:(NSString *)sql, ... NS_REQUIRES_NIL_TERMINATION;
+- (BOOL)execWithQuery:(NSString *)sql;
+- (BOOL)execWithQuery:(NSString *)sql withError:(NSError *__autoreleasing *)err NS_SWIFT_NAME(exec(query:));
+
+- (BOOL)execQuery:(NSString *)sql, ... NS_REQUIRES_NIL_TERMINATION NS_SWIFT_UNAVAILABLE("");
+- (BOOL)exceWithError:(NSError *__autoreleasing *)err withQuery:(NSString *)sql, ... NS_REQUIRES_NIL_TERMINATION NS_SWIFT_UNAVAILABLE("");
 
 - (BOOL)exceQuery:(NSString *)sql withArrArgs:(NSArray *)arrArgs;
-- (BOOL)exceQuery:(NSString *)sql withArrArgs:(NSArray *)arrArgs withError:(NSError *__autoreleasing *)err;
+- (BOOL)exceQuery:(NSString *)sql withArrArgs:(NSArray *)arrArgs withError:(NSError *__autoreleasing *)err NS_SWIFT_NAME(exec(query:arrArgs:));
 
 - (BOOL)exceQuery:(NSString *)sql withParams:(NSDictionary *)params;
-- (BOOL)exceQuery:(NSString *)sql withParams:(NSDictionary *)params withError:(NSError *__autoreleasing *)err;
+- (BOOL)exceQuery:(NSString *)sql withParams:(NSDictionary *)params withError:(NSError *__autoreleasing *)err NS_SWIFT_NAME(exec(query:params:));
 
 /**
  * Execute the SQL statement and return an object of RTNext. For details, please see RTNext class.
  * If you select the (withError:) method and pass in (NSError **) err, the error message is transmitted when the execution fails.
  * Select the appropriate method according to the different parameters outside the SQL statement.
  */
-- (RTNext *)execSql:(NSString *)sql, ... NS_REQUIRES_NIL_TERMINATION;
-- (RTNext *)execWithError:(NSError *__autoreleasing *)err withSql:(NSString *)sql, ... NS_REQUIRES_NIL_TERMINATION;
+- (RTNext *)execWithSql:(NSString *)sql;
+- (RTNext *)execWithSql:(NSString *)sql withError:(NSError *__autoreleasing *)err NS_SWIFT_NAME(exec(sql:));
+
+- (RTNext *)execSql:(NSString *)sql, ... NS_REQUIRES_NIL_TERMINATION NS_SWIFT_UNAVAILABLE("");
+- (RTNext *)execWithError:(NSError *__autoreleasing *)err withSql:(NSString *)sql, ... NS_REQUIRES_NIL_TERMINATION NS_SWIFT_UNAVAILABLE("");
 
 - (RTNext *)execSql:(NSString *)sql withArrArgs:(NSArray *)arrArgs;
-- (RTNext *)execSql:(NSString *)sql withArrArgs:(NSArray *)arrArgs withError:(NSError *__autoreleasing *)err;
+- (RTNext *)execSql:(NSString *)sql withArrArgs:(NSArray *)arrArgs withError:(NSError *__autoreleasing *)err NS_SWIFT_NAME(exec(sql:arrArgs:));
 
 - (RTNext *)execSql:(NSString *)sql withParams:(NSDictionary *)params;
-- (RTNext *)execSql:(NSString *)sql withParams:(NSDictionary *)params withError:(NSError *__autoreleasing *)err;
+- (RTNext *)execSql:(NSString *)sql withParams:(NSDictionary *)params withError:(NSError *__autoreleasing *)err NS_SWIFT_NAME(exec(sql:params:));
 
 
 - (RTNext *)execSql:(NSString *)sql
-            withErr:(NSError *__autoreleasing *)err
          withParams:(NSDictionary *)params
         withArrArgs:(NSArray *)arrArgs
-           withArgs:(va_list)args;
+           withArgs:(va_list)args
+          withError:(NSError *__autoreleasing *)err NS_SWIFT_UNAVAILABLE("");
 
 
 - (BOOL)begin;

@@ -31,6 +31,15 @@
 }
 
 #pragma mark - PUBLIC
+
+- (BOOL)execWithQuery:(NSString *)sql {
+    return [self execQuery:sql withErr:NULL withParams:nil withArrArgs:nil withArgs:nil];
+}
+
+- (BOOL)execWithQuery:(NSString *)sql withError:(NSError *__autoreleasing *)err {
+    return [self execQuery:sql withErr:err withParams:nil withArrArgs:nil withArgs:nil];
+}
+
 - (BOOL)execQuery:(NSString *)sql, ... NS_REQUIRES_NIL_TERMINATION {
     va_list args;
     va_start(args, sql);
@@ -63,10 +72,19 @@
     return [self execQuery:sql withErr:err withParams:params withArrArgs:nil withArgs:nil];
 }
 
+// ----------------
+- (RTNext *)execWithSql:(NSString *)sql {
+    return [self execSql:sql withParams:nil withArrArgs:nil withArgs:nil withError:NULL];
+}
+
+- (RTNext *)execWithSql:(NSString *)sql withError:(NSError *__autoreleasing *)err {
+    return [self execSql:sql withParams:nil withArrArgs:nil withArgs:nil withError:err];
+}
+
 - (RTNext *)execSql:(NSString *)sql, ... NS_REQUIRES_NIL_TERMINATION {
     va_list args;
     va_start(args, sql);
-    RTNext *next = [self execSql:sql withErr:NULL withParams:nil withArrArgs:nil withArgs:args];
+    RTNext *next = [self execSql:sql withParams:nil withArrArgs:nil withArgs:args withError:NULL];
     va_end(args);
     
     return next;
@@ -76,26 +94,27 @@
     
     va_list args;
     va_start(args, sql);
-    RTNext *next = [self execSql:sql withErr:err withParams:nil withArrArgs:nil withArgs:args];
+    RTNext *next = [self execSql:sql withParams:nil withArrArgs:nil withArgs:args withError:err];
     va_end(args);
     
     return next;
 }
 
 - (RTNext *)execSql:(NSString *)sql withArrArgs:(NSArray *)arrArgs {
-    return [self execSql:sql withErr:NULL withParams:nil withArrArgs:arrArgs withArgs:nil];
+    return [self execSql:sql withParams:nil withArrArgs:arrArgs withArgs:nil  withError:NULL];
 }
 
 - (RTNext *)execSql:(NSString *)sql withArrArgs:(NSArray *)arrArgs withError:(NSError *__autoreleasing *)err {
-    return [self execSql:sql withErr:err withParams:nil withArrArgs:arrArgs withArgs:nil];
+    return [self execSql:sql withParams:nil withArrArgs:arrArgs withArgs:nil  withError:err];
 }
 
 - (RTNext *)execSql:(NSString *)sql withParams:(NSDictionary *)params {
-    return [self execSql:sql withErr:NULL withParams:params withArrArgs:nil withArgs:nil];
+    return [self execSql:sql withParams:params withArrArgs:nil withArgs:nil withError:NULL];
 }
 
 - (RTNext *)execSql:(NSString *)sql withParams:(NSDictionary *)params withError:(NSError *__autoreleasing *)err {
-    return [self execSql:sql withErr:err withParams:params withArrArgs:nil withArgs:nil];
+    
+    return [self execSql:sql withParams:params withArrArgs:nil withArgs:nil  withError:err];
 }
 
 
@@ -106,7 +125,8 @@
       withArrArgs:(NSArray *)arrArgs
          withArgs:(va_list)args {
     
-    RTNext *next = [self execSql:sql withErr:err withParams:params withArrArgs:arrArgs withArgs:args];
+    RTNext *next = [self execSql:sql withParams:params withArrArgs:arrArgs withArgs:args withError:err];
+
     
     if (!next) {
         return NO;
@@ -119,10 +139,10 @@
 }
 
 - (RTNext *)execSql:(NSString *)sql
-            withErr:(NSError *__autoreleasing *)err
          withParams:(NSDictionary *)params
         withArrArgs:(NSArray *)arrArgs
-           withArgs:(va_list)args {
+           withArgs:(va_list)args
+          withError:(NSError *__autoreleasing *)err {
     
     DELog(@"RTDB: -sql: %@", sql);
     
