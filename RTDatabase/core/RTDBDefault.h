@@ -8,7 +8,7 @@
 
 #import "RTDB.h"
 
-NS_SWIFT_UNAVAILABLE("")
+NS_SWIFT_UNAVAILABLE("Use RTDBExtention instead")
 @interface RTDBDefault : RTDB
 /**
  Building a table based on the model class

@@ -8,14 +8,14 @@
 
 #ifndef RTPreset_h
 #define RTPreset_h
+
 #define RT_SQLITE_ERROR 0
 #define RT_SQLITE_OK 1
 #define RT_SQLITE_DONE 2
 #define RT_SQLITE_ROW 3
 
-
 #ifndef RT_EXTERN
-    #define RT_EXTERN extern
+#define RT_EXTERN extern
 #endif
 
 #ifndef DELog
@@ -35,6 +35,7 @@
 #endif
 
 @class NSString, NSError;
+
 
 typedef void(^rt_operator_b)(void);
 

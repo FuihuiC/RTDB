@@ -144,6 +144,7 @@ static rt_char_t *rt_sqlite3_bind_type(rt_char_t t) {
         case rtfloat:
         case rtdouble:
         case rtdate:
+        case rtnumber:
             return "REAL";
         case rtchar:
         case rtuchar:

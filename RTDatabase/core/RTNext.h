@@ -46,7 +46,7 @@ typedef void(^RT_COLUMN_CALLBACK_BLOCK)(id value, NSString *name, int step, int 
 
 /** See if there is any next step */
 - (BOOL)step;
-- (BOOL)stepWithError:(NSError *__autoreleasing *)error;
+- (BOOL)stepWithError:(NSError *__autoreleasing *)error  NS_SWIFT_NAME(doStep());
 
 /** Get column count of per row in this table */
 - (int)columnCountOfRow;

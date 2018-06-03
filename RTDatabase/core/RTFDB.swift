@@ -2,28 +2,36 @@
 //  RTFDB.swift
 //  RTDatabase
 //
-//  Created by hc-jim on 2018/6/1.
+//  Created by ENUUI on 2018/6/1.
 //  Copyright © 2018年 ENUUI. All rights reserved.
 //
 
 import Foundation
 
+typealias rt_sw_closure_t = ()->Void
+
 open class RTFDB {
-    public let db = RTDB()
-    public var defaultQueue = DispatchQueue.main
+    fileprivate lazy var db = RTDB()
+    
+    public var defaultQueue: DispatchQueue?
     
     public init() {}
+    
+    public convenience init(defaultQueue: DispatchQueue?) {
+        self.init()
+        self.defaultQueue = defaultQueue
+    }
     
     public func onDefault() -> RTFDBExtra {
         return RTFDBExtra(db, defaultQueue)
     }
     
     public func onMain() -> RTFDBExtra {
-        return RTFDBExtra(db, defaultQueue)
+        return RTFDBExtra(db, defaultQueue).onMain()
     }
     
     public func onQueue(_ q: DispatchQueue) -> RTFDBExtra {
-        return RTFDBExtra(db, defaultQueue)
+        return RTFDBExtra(db, defaultQueue).onQueue(q)
     }
     
     public func onClose() {
@@ -31,19 +39,19 @@ open class RTFDB {
     }
 }
 
-typealias rt_sw_closure_t = ()->Void
-
 public class RTFDBExtra {
-    fileprivate var defaultQueue: DispatchQueue!
+    fileprivate var defaultQueue: DispatchQueue?
     fileprivate var db: RTDB!
     fileprivate var workQ: DispatchQueue?
     fileprivate var backMain = false
     fileprivate var error: Error?
     fileprivate var next: RTNext?
     
-    init(_ db: RTDB, _ defaultQueue: DispatchQueue) {
+    init(_ db: RTDB, _ defaultQueue: DispatchQueue?) {
         self.db = db
-        self.defaultQueue = defaultQueue
+        if let dq = defaultQueue {
+            self.defaultQueue = dq
+        }
     }
     
     public func onMain() -> RTFDBExtra {
@@ -52,13 +60,14 @@ public class RTFDBExtra {
         return self;
     }
     
-    public func onQueue(_ q: DispatchQueue) -> RTFDBExtra {
+    public func onQueue(_ q: DispatchQueue?) -> RTFDBExtra {
         self.backMain = false
         workQ = q
         return self
     }
     
     public func onDefault() -> RTFDBExtra {
+        self.error = nil
         return onQueue(defaultQueue)
     }
     
@@ -103,6 +112,52 @@ public class RTFDBExtra {
 }
 
 extension RTFDBExtra {
+    /// create
+    public func onCreate(_ cls: AnyClass) -> RTFDBExtra {
+        return self.onWorkQueue {
+            do {
+                try self.db.createTable(cls)
+            } catch let err {
+                self.error = err
+            }
+        }
+    }
+    
+    /// insert
+    public func onInsert<T: RTFAble>(_ obj: T) -> RTFDBExtra {
+        return self.onWorkQueue {
+            do {
+                try self.db.insertTable(obj)
+            } catch let err {
+                self.error = err
+            }
+        }
+    }
+    
+    /// update
+    public func onUpdate<T: RTFAble>(_ obj: T) -> RTFDBExtra {
+        return self.onWorkQueue {
+            do {
+                try self.db.updateTable(obj)
+            } catch let err {
+                self.error = err
+            }
+        }
+    }
+    
+    /// delete
+    public func onDelete<T: RTFAble>(_ obj: T) -> RTFDBExtra {
+        return self.onWorkQueue {
+            do {
+                try self.db.deleteTable(obj)
+            } catch let err {
+                self.error = err
+            }
+        }
+    }
+}
+
+extension RTFDBExtra {
     fileprivate func openDB(_ path: String, _ flags: Int32) {
         do {
             try self.db.open(path: path, flags: flags)
@@ -130,6 +185,10 @@ extension RTFDBExtra {
 
 extension RTFDBExtra {
     fileprivate func onWorkQueue(_ closure: @escaping rt_sw_closure_t) -> RTFDBExtra {
+        if self.error != nil {
+            return self
+        }
+        
         let semaphore = DispatchSemaphore(value: 1)
         runClosure {
             closure()

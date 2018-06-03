@@ -16,7 +16,9 @@ RT_EXTERN rt_objc_t rt_object_class_type(id obj);
 RT_EXTERN rt_char_t *rt_class_name(Class cls);
 
 #pragma mark - @interface RTInfo
+
 /** Caching information about the model class. */
+NS_SWIFT_UNAVAILABLE("")
 @interface RTInfo : NSObject {
     @public
     BOOL        _has_id;    // if the model class has property named _id and _id is the type of integer, _has_id = YES.
