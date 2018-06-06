@@ -80,3 +80,20 @@ public protocol RTFAble: AnyObject {
     static var tableName: String { set get }
     static var columns: [RTFType] { set get }
 }
+
+extension RTFType {
+    public func columnValue(forKey key: String) -> Any? {
+        let objM = Mirror(reflecting: self)
+        var value: Any?
+
+        for item in objM.children {
+            if let label = item.label {
+                if label == key {
+                    value = item.value
+                    break
+                }
+            }
+        }
+        return value
+    }
+}

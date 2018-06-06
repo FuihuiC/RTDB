@@ -7,6 +7,7 @@
 //
 
 #import "RTDB.h"
+#import "RTInfo.h"
 
 NS_SWIFT_UNAVAILABLE("Use RTDBExtention instead")
 @interface RTDBDefault : RTDB

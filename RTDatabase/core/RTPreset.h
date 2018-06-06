@@ -88,6 +88,7 @@ RT_EXTERN void rt_error(
 );
 
 
+RT_EXTERN rt_objc_t rt_object_class_type(id obj);
 
 /** Get the number of digits of integer */
 RT_EXTERN int rt_integer_digit(long long n);

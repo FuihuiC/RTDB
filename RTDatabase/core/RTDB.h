@@ -8,7 +8,6 @@
 
 #import "RTNext.h"
 #import "RTDBFunc.h"
-#import "RTInfo.h"
 
 /**
  * This class is used to manage SQLite.

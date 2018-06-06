@@ -41,7 +41,7 @@ fileprivate func creatSql(_ tableName: String, _ columns: [RTFType]) -> String? 
     for type in columns {
         sql += ", " + type.bindStr
     }
-    
+    sql += ")"
     return sql
 }
 

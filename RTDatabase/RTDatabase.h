@@ -2,7 +2,7 @@
 //  RTDatabase.h
 //  RTDatabase
 //
-//  Created by 陈福辉 on 2018/5/13.
+//  Created by ENUUI on 2018/5/13.
 //  Copyright © 2018年 ENUUI. All rights reserved.
 //
 
@@ -16,5 +16,8 @@ FOUNDATION_EXPORT const unsigned char RTDatabaseVersionString[];
 
 // In this header, you should import all the public headers of your framework using statements like #import <RTDatabase/PublicHeader.h>
 
-
+#if OS_OBJECT_USE_OBJC
 #import <RTDatabase/RTSDB.h>
+#else
+#import <RTDatabase/RTDB.h>
+#endif

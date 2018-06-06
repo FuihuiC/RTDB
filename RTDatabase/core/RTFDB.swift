@@ -11,7 +11,7 @@ import Foundation
 typealias rt_sw_closure_t = ()->Void
 
 open class RTFDB {
-    fileprivate lazy var db = RTDB()
+    fileprivate var db = RTDB()
     
     public var defaultQueue: DispatchQueue?
     

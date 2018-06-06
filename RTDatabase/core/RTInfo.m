@@ -24,17 +24,6 @@ static int rt_class_info_v(Class cls, int count, rt_pro_info_p *infos, BOOL *has
 
 #pragma mark - FUNCTION
 
-void rt_free_str(char **str) {
-    if (str == NULL) {
-        return;
-    }
-    if (*str == NULL) {
-        return;
-    }
-    free(*str);
-    *str = 0x00;
-}
-
 // 获取class的名字
 rt_char_t *rt_class_name(Class cls) {
     return object_getClassName(cls);

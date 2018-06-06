@@ -41,12 +41,20 @@ extension RTDB {
         
         if let insert = info!.insert {
             do {
-                try self.exec(query: insert)
+                try self.exec(query: insert, arrArgs: [1])
             } catch let err {
                 throw err
             }
         } else {
             throw RTError(103, "Found out an empty insert sql!")
+        }
+    }
+    
+    fileprivate func columnValues<T: RTFAble>(_ obj: T) {
+        let columns = T.columns
+        var values = [Any]()
+        for type in columns {
+            
         }
     }
     
