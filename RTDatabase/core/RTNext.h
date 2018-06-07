@@ -44,6 +44,8 @@ typedef void(^RT_COLUMN_CALLBACK_BLOCK)(id value, NSString *name, int step, int 
 /** Loop executes sqlite3_step () and find current row all column value out. */
 - (void)enumAllColumns:(RT_COLUMN_CALLBACK_BLOCK)columnCallback;
 
+- (NSError *)finalError;
+
 /** See if there is any next step */
 - (BOOL)step;
 - (BOOL)stepWithError:(NSError *__autoreleasing *)error  NS_SWIFT_NAME(doStep());

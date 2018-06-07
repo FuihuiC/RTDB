@@ -54,23 +54,27 @@ public class RTFDBExtra {
         }
     }
     
+    /// Change the queue to Main
     public func onMain() -> RTFDBExtra {
         backMain = true
         workQ = nil
         return self;
     }
     
+    /// Change the queue to a custom queue
     public func onQueue(_ q: DispatchQueue?) -> RTFDBExtra {
         self.backMain = false
         workQ = q
         return self
     }
     
+    /// Reset RTFDBExtra
     public func onDefault() -> RTFDBExtra {
         self.error = nil
         return onQueue(defaultQueue)
     }
     
+    // Out error
     public func onError(_ closure: @escaping (Error?)->Void) {
         if self.error != nil {
             closure(self.error)
@@ -78,11 +82,12 @@ public class RTFDBExtra {
     }
     
     // ------------------------------
-    
+    /// Open database.
     public func onOpen(_ path: String) -> RTFDBExtra {
         return self.onOpenFlags(path, RT_SQLITE_OPEN_CREATE | RT_SQLITE_OPEN_READWRITE | RT_SQLITE_OPEN_FULLMUTEX | RT_SQLITE_OPEN_SHAREDCACHE)
     }
     
+    /// Open database.
     public func onOpenFlags(_ path: String, _ flags: Int32) -> RTFDBExtra {
         return onWorkQueue {
             self.openDB(path, flags)
@@ -90,6 +95,8 @@ public class RTFDBExtra {
     }
     
     // -------------
+    
+    /// Execute sql.
     public func execDict(_ sql: String, _ params: [String: AnyObject]?) -> RTFDBExtra {
         return self.onWorkQueue {
             self.exec(sql, params, nil);
@@ -107,6 +114,32 @@ public class RTFDBExtra {
             let sql = args.first as! String
             let arrArgs = args.dropFirst()
             self.exec(sql, nil, Array(arrArgs))
+        }
+    }
+    
+    public func onNext(_ closure: @escaping (RTNext?)->Void) -> RTFDBExtra {
+        return self.onWorkQueue {
+            closure(self.next)
+        }
+    }
+    
+    public func onEnum(_ closure: @escaping ([AnyHashable: Any]?, Int32, UnsafeMutablePointer<ObjCBool>?)->Void) -> RTFDBExtra {
+        return self.onWorkQueue {
+            guard let n = self.next else { return }
+            
+            n.enumAllSteps { (dict, i, pStop, err) in
+                self.error = err
+                closure(dict, i, pStop)
+            }
+        }
+    }
+    
+    public func onDone() -> RTFDBExtra {
+        guard let n = self.next else { return self }
+        
+        return self.onWorkQueue {
+            while (n.step()) {}
+            self.error = n.finalError()
         }
     }
 }
@@ -190,7 +223,7 @@ extension RTFDBExtra {
         }
         
         let semaphore = DispatchSemaphore(value: 1)
-        runClosure {
+        self.runClosure {
             closure()
             semaphore.signal()
         }

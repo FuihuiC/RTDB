@@ -10,7 +10,7 @@ class RTFTableInfo {
     var tableName: String
     var columns: [RTFType]
     
-    lazy var creat: String? = {
+    lazy var create: String? = {
         return creatSql(self.tableName, self.columns)
     }()
     

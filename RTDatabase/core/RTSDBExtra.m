@@ -269,7 +269,7 @@
 }
 
 #pragma mark -
-- (RTSDBExtra *(^)(Class))onCreat {
+- (RTSDBExtra *(^)(Class))onCreate {
     return ^(Class cls) {
         return self.onWorkQueue(^() {
             [self tableCreat:cls];

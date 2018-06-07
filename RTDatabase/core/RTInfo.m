@@ -230,7 +230,7 @@ static int rt_prepare_info(Class cls, rt_pro_info_p *proInfos, NSError **err) {
 
 @interface RTInfo () {
     char        *_clsName;  // class name
-    char        *_creat;    // creat sql
+    char        *_create;    // create sql
     char        *_insert;   // insert sql
     char        *_update;   // update sql
     char        *_delete;   // delete sql
@@ -272,16 +272,16 @@ static int rt_prepare_info(Class cls, rt_pro_info_p *proInfos, NSError **err) {
 }
 
 - (rt_char_t *)creatSql {
-    if (_creat == NULL) {
-        rt_str_append_v(&_creat, "CREATE TABLE if not exists '", [self className], "' ('_id' integer primary key autoincrement not null", NULL);
+    if (_create == NULL) {
+        rt_str_append_v(&_create, "CREATE TABLE if not exists '", [self className], "' ('_id' integer primary key autoincrement not null", NULL);
         for (rt_pro_info *pro = _prosInfo; pro != NULL; pro = pro->next) {
             rt_char_t *bindT = rt_sqlite3_bind_type(pro->t);
-            rt_str_append_v(&self->_creat, ", '", pro->name, "' '", bindT, "'", NULL);
+            rt_str_append_v(&self->_create, ", '", pro->name, "' '", bindT, "'", NULL);
         }
        
-        rt_str_append_v(&_creat, ")", NULL);
+        rt_str_append_v(&_create, ")", NULL);
     }
-    return _creat;
+    return _create;
 }
 
 - (rt_char_t *)insertSql {

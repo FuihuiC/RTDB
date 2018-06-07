@@ -81,7 +81,7 @@ public protocol RTFAble: AnyObject {
     static var columns: [RTFType] { set get }
 }
 
-extension RTFType {
+extension RTFAble {
     public func columnValue(forKey key: String) -> Any? {
         let objM = Mirror(reflecting: self)
         var value: Any?

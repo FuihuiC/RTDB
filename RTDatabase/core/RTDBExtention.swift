@@ -10,6 +10,11 @@ import Foundation
 fileprivate var dictCacheTableInfo = [String: RTFTableInfo]()
 fileprivate var semaphore = DispatchSemaphore(value: 1)
 
+fileprivate enum RTFBaseOperation {
+    case Insert
+    case Update
+    case Delete
+}
 
 //extension RTFDBDefault: RTDB {
 extension RTDB {
@@ -21,12 +26,8 @@ extension RTDB {
             throw err!
         }
         
-        if let creatSql = info!.creat {
-            do {
-                try self.exec(query: creatSql)
-            } catch let err {
-                throw err
-            }
+        if let creatSql = info!.create {
+            try self.exec(query: creatSql)
         } else {
             throw RTError(103, "Found out an empty create sql!")
         }
@@ -34,68 +35,66 @@ extension RTDB {
     
     /// insert a row
     public func insertTable<T: RTFAble>(_ obj: T) throws {
-        let (info, err) = infoFor(T.self)
-        if err != nil {
-            throw err!
-        }
-        
-        if let insert = info!.insert {
-            do {
-                try self.exec(query: insert, arrArgs: [1])
-            } catch let err {
-                throw err
-            }
-        } else {
-            throw RTError(103, "Found out an empty insert sql!")
-        }
-    }
-    
-    fileprivate func columnValues<T: RTFAble>(_ obj: T) {
-        let columns = T.columns
-        var values = [Any]()
-        for type in columns {
-            
-        }
+        try baseOperate(RTFBaseOperation.Insert, obj)
     }
     
     /// update a row
     public func updateTable<T: RTFAble>(_ obj: T) throws {
-        let (info, err) = infoFor(T.self)
-        if err != nil {
-            throw err!
-        }
-        
-        if let update = info!.update {
-            do {
-                try self.exec(query: update + "\(obj._id)")
-            } catch let err {
-                throw err
-            }
-        } else {
-            throw RTError(103, "Found out an empty update sql!")
-        }
+        try baseOperate(RTFBaseOperation.Update, obj)
     }
     
     /// delete a row
     public func deleteTable<T: RTFAble>(_ obj: T) throws {
-        let (info, err) = infoFor(T.self)
-        if err != nil {
-            throw err!
-        }
-        
-        if let delete = info!.delete {
-            do {
-                try self.exec(query: delete + "\(obj._id)")
-            } catch let err {
-                throw err
-            }
-        } else {
-            throw RTError(103, "Found out an empty delete sql!")
-        }
+        try baseOperate(RTFBaseOperation.Delete, obj)
     }
 }
 
 extension RTDB {
+    
+    fileprivate func baseOperate<T: RTFAble>(_ op: RTFBaseOperation, _ obj: T) throws {
+        let (info, err) = infoFor(T.self)
+        if err != nil {
+            throw err!
+        }
+        var query: String?
+        switch op {
+        case .Insert:
+            query = info?.insert
+        case .Update:
+            query = info?.update
+        case .Delete:
+            query = info?.delete
+        }
+        
+        if query == nil {
+            throw RTError(103, "Found out an empty base operate sql!")
+        }
+        
+        if op == .Update || op == .Delete {
+            query! += "\(obj._id)"
+        }
+        
+        var values: [Any]?
+        if op == .Insert || op == .Update {
+            values = columnValues(obj)
+        }
+        
+        try self.exec(query: query!, arrArgs: values)
+    }
+    
+    fileprivate func columnValues<T: RTFAble>(_ obj: T) -> [Any] {
+        let columns = T.columns
+        var values = [Any]()
+        for type in columns {
+            if let v = obj.columnValue(forKey: type.name) {
+                values.append(v)
+            } else {
+                values.append(NSNull())
+            }
+        }
+        return values
+    }
+    
     fileprivate func infoFor(_ cls: AnyClass) -> (RTFTableInfo?, RTError?) {
         
         guard let clsAble = cls as? RTFAble.Type else {

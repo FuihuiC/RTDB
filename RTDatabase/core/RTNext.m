@@ -15,6 +15,7 @@
 }
 @property (nonatomic, copy) NSString *sql;
 @property (nonatomic, assign) int countOfColumn;
+@property (nonatomic, strong) NSError *error;
 @end
 
 @implementation RTNext
@@ -36,12 +37,22 @@
     [self finalizeStep];
 }
 
+- (NSError *)finalError {
+    return self.error;
+}
+
+//
 - (BOOL)step {
     return [self stepWithError:nil];
 }
 
 - (BOOL)stepWithError:(NSError *__autoreleasing *)error {
-    BOOL result = (rt_sqlite3_step(_stmt, error) == RT_SQLITE_ROW);
+    NSError *err;
+    BOOL result = (rt_sqlite3_step(_stmt, &err) == RT_SQLITE_ROW);
+    if (error != NULL && err != nil) {
+        *error = err;
+    }
+    self.error = err;
     
     if (!result) {
         [self finalizeStep];
@@ -68,12 +79,14 @@
     
     // prepare callback
     RT_STEP_CALLBACK_BLOCK stepback = ^(NSDictionary *dic, int step, BOOL *stop, NSError *err) {
+        self.error = err;
         if (stepCallback) {
             stepCallback(dic, step, stop, err);
         }
     };
     
     RT_COLUMN_CALLBACK_BLOCK columnback = ^(id value, NSString *name, int step, int column, BOOL *stop, NSError *err) {
+        self.error = err;
         if (columnCallback) {
             columnCallback(value, name, step, column, stop, err);
         }
