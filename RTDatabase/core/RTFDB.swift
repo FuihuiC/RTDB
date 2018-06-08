@@ -22,12 +22,12 @@ open class RTFDB {
         self.defaultQueue = defaultQueue
     }
     
-    public func onDefault() -> RTFDBExtra {
-        return RTFDBExtra(db, defaultQueue)
+    public var onMain: RTFDBExtra {
+        return RTFDBExtra(db, defaultQueue).onMain
     }
-    
-    public func onMain() -> RTFDBExtra {
-        return RTFDBExtra(db, defaultQueue).onMain()
+
+    public var onDefault: RTFDBExtra {
+        return RTFDBExtra(db, defaultQueue)
     }
     
     public func onQueue(_ q: DispatchQueue) -> RTFDBExtra {
@@ -55,23 +55,23 @@ public class RTFDBExtra {
     }
     
     /// Change the queue to Main
-    public func onMain() -> RTFDBExtra {
-        backMain = true
-        workQ = nil
-        return self;
-    }
-    
-    /// Change the queue to a custom queue
-    public func onQueue(_ q: DispatchQueue?) -> RTFDBExtra {
-        self.backMain = false
-        workQ = q
+    public var onMain: RTFDBExtra {
+        self.backMain = true
+        self.workQ = nil
         return self
     }
     
     /// Reset RTFDBExtra
-    public func onDefault() -> RTFDBExtra {
+    public var onDefault: RTFDBExtra {
         self.error = nil
         return onQueue(defaultQueue)
+    }
+
+    /// Change the queue to a custom queue
+    public func onQueue(_ q: DispatchQueue?) -> RTFDBExtra {
+        self.backMain = false
+        self.workQ = q
+        return self
     }
     
     // Out error
