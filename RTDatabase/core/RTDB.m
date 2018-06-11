@@ -9,7 +9,9 @@
 #import "RTDB.h"
 
 @implementation RTDB
-
+- (void *)sqlite3_db {
+    return self->_db;
+}
 - (BOOL)close {
     BOOL suc = rt_sqlite3_close(_db);
     if (suc) {

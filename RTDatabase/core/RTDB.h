@@ -17,7 +17,7 @@
     @public
     void *_db;
 }
-
+- (void *)sqlite3_db;
 #pragma mark -
 /**
  * Create or open sqlite. based on the specified path.

@@ -56,6 +56,7 @@ extension RTDB {
         if err != nil {
             throw err!
         }
+     
         var query: String?
         switch op {
         case .Insert:
@@ -70,6 +71,23 @@ extension RTDB {
             throw RTError(103, "Found out an empty base operate sql!")
         }
         
+        
+        var _id: Int64 = -1
+        if op == .Insert {
+            var errid: NSError? = nil
+            if let maxIDSql = info?.maxID {
+                let cMaxIDSql: UnsafePointer<rt_char_t> = UnsafePointer<rt_char_t>(maxIDSql)
+                _id = Int64(rt_get_primary_id(self.sqlite3_db(), cMaxIDSql, &errid))
+            }
+            if errid != nil {
+                throw errid!
+            } else if _id == -1 {
+                throw RTError(105, "Select primery id failure!");
+            } else {
+                _id += 1
+            }
+        }
+        
         if op == .Update || op == .Delete {
             query! += "\(obj._id)"
         }
@@ -80,6 +98,10 @@ extension RTDB {
         }
         
         try self.exec(query: query!, arrArgs: values)
+        
+        if op == .Insert {
+            obj._id = _id
+        }
     }
     
     fileprivate func columnValues<T: RTFAble>(_ obj: T) -> [Any] {

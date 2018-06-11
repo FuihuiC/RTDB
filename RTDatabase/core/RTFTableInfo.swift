@@ -26,6 +26,10 @@ class RTFTableInfo {
         return deleteSql(self.tableName)
     }()
     
+    lazy var maxID: String = {
+        return "SELECT MAX(_id) FROM " + self.tableName
+    }()
+    
     init(_ tableName: String, _ columns: [RTFType]) {
         self.tableName = tableName
         self.columns = columns

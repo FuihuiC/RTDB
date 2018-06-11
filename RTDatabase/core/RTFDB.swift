@@ -75,9 +75,10 @@ public class RTFDBExtra {
     }
     
     // Out error
-    public func onError(_ closure: @escaping (Error?)->Void) {
-        if self.error != nil {
-            closure(self.error)
+    public func onError(_ closure: @escaping (Error)->Void) {
+        
+        if let err = self.error {
+            closure(err)
         }
     }
     
