@@ -64,7 +64,7 @@ NS_SWIFT_UNAVAILABLE("Use RTSDBExtra instead!")
 - (RTSDBExtra *(^)(void))onDone;
 #pragma mark Default
 /** detial see RTDBDefault */
-- (RTSDBExtra *(^)(Class))onCreat;
+- (RTSDBExtra *(^)(Class))onCreate;
 - (RTSDBExtra *(^)(id obj))onInsert;
 - (RTSDBExtra *(^)(id obj))onUpdate;
 - (RTSDBExtra *(^)(id obj))onDelete;

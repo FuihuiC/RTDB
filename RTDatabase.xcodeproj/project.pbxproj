@@ -9,11 +9,6 @@
 /* Begin PBXBuildFile section */
 		27256BAF20B56E5600E37D3D /* RTSDBExtra.h in Headers */ = {isa = PBXBuildFile; fileRef = 27256BAD20B56E5600E37D3D /* RTSDBExtra.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		27256BB020B56E5600E37D3D /* RTSDBExtra.m in Sources */ = {isa = PBXBuildFile; fileRef = 27256BAE20B56E5600E37D3D /* RTSDBExtra.m */; };
-		27A092E520C1176F00194C4D /* RTFDB.swift in Sources */ = {isa = PBXBuildFile; fileRef = 27A092E420C1176F00194C4D /* RTFDB.swift */; };
-		27A092F920C3E40500194C4D /* RTError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 27A092F620C3E40400194C4D /* RTError.swift */; };
-		27A092FA20C3E40500194C4D /* RTFAble.swift in Sources */ = {isa = PBXBuildFile; fileRef = 27A092F720C3E40500194C4D /* RTFAble.swift */; };
-		27B334B320C3EAC900F14CB2 /* RTFTableInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = 27B334B120C3EAC900F14CB2 /* RTFTableInfo.swift */; };
-		27B334B420C3EAC900F14CB2 /* RTDBExtention.swift in Sources */ = {isa = PBXBuildFile; fileRef = 27B334B220C3EAC900F14CB2 /* RTDBExtention.swift */; };
 		655704EF20A82039004238C0 /* RTDatabase.h in Headers */ = {isa = PBXBuildFile; fileRef = 655704ED20A82039004238C0 /* RTDatabase.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		6557050420A8210B004238C0 /* RTPreset.h in Headers */ = {isa = PBXBuildFile; fileRef = 655704F620A8210B004238C0 /* RTPreset.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		6557050520A8210B004238C0 /* RTSDB.m in Sources */ = {isa = PBXBuildFile; fileRef = 655704F720A8210B004238C0 /* RTSDB.m */; };
@@ -34,11 +29,6 @@
 /* Begin PBXFileReference section */
 		27256BAD20B56E5600E37D3D /* RTSDBExtra.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RTSDBExtra.h; sourceTree = "<group>"; };
 		27256BAE20B56E5600E37D3D /* RTSDBExtra.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = RTSDBExtra.m; sourceTree = "<group>"; };
-		27A092E420C1176F00194C4D /* RTFDB.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RTFDB.swift; sourceTree = "<group>"; };
-		27A092F620C3E40400194C4D /* RTError.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RTError.swift; sourceTree = "<group>"; };
-		27A092F720C3E40500194C4D /* RTFAble.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RTFAble.swift; sourceTree = "<group>"; };
-		27B334B120C3EAC900F14CB2 /* RTFTableInfo.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RTFTableInfo.swift; sourceTree = "<group>"; };
-		27B334B220C3EAC900F14CB2 /* RTDBExtention.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RTDBExtention.swift; sourceTree = "<group>"; };
 		655704EA20A82039004238C0 /* RTDatabase.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = RTDatabase.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		655704ED20A82039004238C0 /* RTDatabase.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RTDatabase.h; sourceTree = "<group>"; };
 		655704EE20A82039004238C0 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -98,11 +88,6 @@
 		655704F520A82103004238C0 /* core */ = {
 			isa = PBXGroup;
 			children = (
-				27B334B220C3EAC900F14CB2 /* RTDBExtention.swift */,
-				27B334B120C3EAC900F14CB2 /* RTFTableInfo.swift */,
-				27A092F620C3E40400194C4D /* RTError.swift */,
-				27A092F720C3E40500194C4D /* RTFAble.swift */,
-				27A092E420C1176F00194C4D /* RTFDB.swift */,
 				655704F620A8210B004238C0 /* RTPreset.h */,
 				655704FF20A8210B004238C0 /* RTTools.m */,
 				655704FC20A8210B004238C0 /* RTDB.h */,
@@ -210,9 +195,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				27A092FA20C3E40500194C4D /* RTFAble.swift in Sources */,
-				27A092F920C3E40500194C4D /* RTError.swift in Sources */,
-				27B334B320C3EAC900F14CB2 /* RTFTableInfo.swift in Sources */,
 				6557050B20A8210B004238C0 /* RTNext.m in Sources */,
 				6557050F20A8210B004238C0 /* RTDBFunc.m in Sources */,
 				27256BB020B56E5600E37D3D /* RTSDBExtra.m in Sources */,
@@ -220,9 +202,7 @@
 				6557050520A8210B004238C0 /* RTSDB.m in Sources */,
 				6557050E20A8210B004238C0 /* RTInfo.m in Sources */,
 				6557050720A8210B004238C0 /* RTDB.m in Sources */,
-				27B334B420C3EAC900F14CB2 /* RTDBExtention.swift in Sources */,
 				6557050820A8210B004238C0 /* RTDBDefault.m in Sources */,
-				27A092E520C1176F00194C4D /* RTFDB.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
