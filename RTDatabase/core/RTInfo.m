@@ -230,7 +230,7 @@ static int rt_prepare_info(Class cls, rt_pro_info_p *proInfos, NSError **err) {
 
 @interface RTInfo () {
     char        *_clsName;  // class name
-    char        *_create;    // create sql
+    char        *_create;   // create sql
     char        *_insert;   // insert sql
     char        *_update;   // update sql
     char        *_delete;   // delete sql
@@ -316,7 +316,7 @@ static int rt_prepare_info(Class cls, rt_pro_info_p *proInfos, NSError **err) {
             rt_str_append_v(&self->_update, pro->name, end ? " = ?" : " = ?, ", NULL);
             i++;
         }
-        rt_str_append_v(&_update, 1, " WHERE _id = ", NULL);
+        rt_str_append_v(&_update, " WHERE _id = ", NULL);
     }
     return _update;
 }

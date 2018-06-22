@@ -162,6 +162,8 @@ typedef enum : NSUInteger {
     if (op == op_insert) {
         // Assignment the maximum primary key value to the table to _id
         [obj setValue:@(_id) forKey:@"_id"];
+    } else if (op == op_delete) {
+        [obj setValue:@(0) forKey:@"_id"];
     }
     return YES;
 }
