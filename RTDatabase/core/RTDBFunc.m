@@ -122,9 +122,9 @@ int rt_sqlite3_step(void *stmt, NSError **err) {
     return rt_sqlite3_status_code(result);
 }
 
-/** 获取的primary id */
+/** primary id */
 NSInteger rt_get_primary_id(void *db, rt_char_t *sql, NSError **err) {
-    long long _id = -1;
+    NSInteger _id = -1;
     void *idStmt;
     if (!rt_sqlite3_prepare_v2((sqlite3 *)db, sql, &idStmt, err)) {
         return _id;
@@ -132,7 +132,7 @@ NSInteger rt_get_primary_id(void *db, rt_char_t *sql, NSError **err) {
         rt_sqlite3_finalize(&idStmt);
         return _id;
     } else {
-        _id = sqlite3_column_int64(idStmt, 0);
+        _id = (NSInteger)sqlite3_column_int64(idStmt, 0);
     }
     
     rt_sqlite3_finalize(&idStmt);
