@@ -194,19 +194,25 @@
     } else if (params && params.count > 0) {
         
         NSArray *arrKeys = params.allKeys;
-        int i = 0;
-        for (NSString *dickey in arrKeys) {
-            NSString *key = [@":" stringByAppendingString:dickey];
-            int idx = rt_sqlite3_bind_param_index(stmt, [key UTF8String]);
+
+        BOOL isInsert = [self isInserSql:sql];
+        
+        for (int i = 0; i < arrKeys.count; i++) {
+            NSString *dickey = arrKeys[i];
             id value = params[dickey];
-            if (idx == 0) {
-                rt_error([NSString stringWithFormat:@"RTDB can not find a param for key: %@. -sql: %@", dickey, sql], 102, err);
-                break;
-            }
             rt_objc_t t = rt_object_class_type(value);
+            int idx = i + 1;
+            if (isInsert) {
+                NSString *key = [@":" stringByAppendingString:dickey];
+                
+                idx = rt_sqlite3_bind_param_index(stmt, [key UTF8String]);
+                
+                if (idx == 0) {
+                    rt_error([NSString stringWithFormat:@"RTDB can not find a param for key: %@. -sql: %@", dickey, sql], 102, err);
+                    break;
+                }
+            }
             rt_sqlite3_bind(stmt, idx, value, t);
-            
-            i++;
             boundCount++;
         }
     }
@@ -225,8 +231,17 @@
     return next;
 }
 
+- (BOOL)isInserSql:(NSString *)sql {
+    return ([[sql stringByReplacingOccurrencesOfString:@" " withString:@""] hasPrefix:@"INSERT"] ||
+            [[sql stringByReplacingOccurrencesOfString:@" " withString:@""] hasPrefix:@"insert"]);
+}
+
 // format sql for bind. change (?, ?...) to (:name1, :name2, ...)
 - (NSString *)formatSqlForDictArgu:(NSString *)sql {
+    if (![self isInserSql:sql]) {
+        return sql;
+    }
+    
     BOOL sqlT = [sql containsString:@":"];
     NSString *sql_format = sql;
     if (!sqlT) {

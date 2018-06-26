@@ -102,14 +102,10 @@ RT_EXTERN char *rt_str_mutable(const char *src);
  * After the end of the use, free is needed.
  */
 RT_EXTERN char *rt_strcat(char *str1, char *str2) ;
-RT_EXTERN void rt_str_append_v(char **dest, ...);
-/** Stitching strings together */
-RT_EXTERN void rt_str_append(
+RT_EXTERN void rt_str_append_v(
   char **dest, /* Stitching result pointer */
-  int count,   /* Number of strings to be spliced*/
   ...          /* Indeterminate parameter. char * */
 );
-
 
 typedef struct RT_PRO_INFO rt_pro_info;
 typedef struct RT_PRO_INFO * rt_pro_info_p;

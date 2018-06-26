@@ -10,48 +10,6 @@
 #include <stdlib.h>
 #include <string.h>
 #import "RTPreset.h"
-typedef struct RT_CHAR_STR rt_char_str, *rt_char_str_p;
-
-struct RT_CHAR_STR {
-    char *src;
-    size_t len;
-    rt_char_str *next;
-};
-
-static rt_char_str *rt_str_creat(char *src) {
-    if (src == NULL) {
-        return NULL;
-    }
-    rt_char_str *node = (rt_char_str *)malloc(sizeof(rt_char_str));
-    if (node == NULL) {
-        return NULL;
-    }
-    node->src = src;
-    node->len = strlen(src);
-    node->next = NULL;
-    return node;
-}
-
-static void rt_str_node_append(rt_char_str_p *node, char *src) {
- 
-    if (*node == NULL) {
-        *node = rt_str_creat(src);
-    } else {
-        rt_str_node_append(&((*node)->next), src);
-    }
-}
-
-static void rt_str_free_node(rt_char_str *node) {
-    if (node == NULL) {
-        return;
-    } else {
-        if (node->next != NULL) {
-            rt_str_free_node(node->next);
-        }
-        free(node);
-        node = 0x0;
-    }
-}
 
 
 // Get the number of digits of integer
@@ -114,113 +72,31 @@ char *rt_strcat(char *str1, char *str2) {
 }
 
 void rt_str_append_v(char **dest, ...) {
-    
     if (dest == NULL) return;
     
     size_t char_len = sizeof(char);
+    size_t len = 0;
     
     va_list ap;
     va_start(ap, dest);
-    size_t len = 0;
+    
     if (*dest != NULL) {
         len += strlen(*dest);
     }
-    rt_char_str *node = NULL;
+    
+    size_t src_len = 0;
+    
     for (char *src = va_arg(ap, char *); src != NULL; src = va_arg(ap, char *)) {
-        len += strlen(src);
-        rt_str_node_append(&node, src);
+        src_len = strlen(src);
+        *dest = realloc(*dest, (len + src_len) * char_len);
+        memmove(*dest + len, src, src_len);
+        len += src_len;
     }
     va_end(ap);
     
-    char *result = (char *)malloc(len * char_len);
-    if (result == NULL) {
-        return;
-    }
-    len = 0;
-    if (*dest != NULL) {
-        memmove(result, *dest, strlen(*dest));
-        len += strlen(*dest);
-    }
-    
-    for (rt_char_str *n = node; n != NULL; n = n->next) {
-        memmove(result + len, n->src, n->len);
-        len += n->len;
-    }
-    
-    *dest = realloc(*dest, len + 1);
-    memmove(*dest, result, len);
+    *dest = realloc(*dest, (len + 1) * char_len);
     memmove(*dest + len, "\0", char_len);
-    
-    
-    if (result != NULL) {
-        free(result);
-        result = 0x0;
-    }
-    rt_str_free_node(node);
 }
-
-// Stitching strings together
-void rt_str_append(char **dest, int count, ...) {
-    
-    va_list ap;
-    va_start(ap, count);
-    
-    if (count == 0) return;
-    
-    char *result = NULL;
-    int n = 0;
-    unsigned long len = 0;
-    int hasDest = (*dest != NULL);
-    
-    if (hasDest) {
-        count++;
-    }
-    
-    char *srcs[count + 1];
-    if (hasDest) {
-        len += strlen(*dest);
-        srcs[0] = *dest;
-        n++;
-    }
-    
-    for (int i = n; i < count; i++) {
-        char *src = va_arg(ap, char *);
-        if (src == NULL) continue;
-        
-        srcs[n] = src;
-        len += strlen(src);
-        n++;
-    }
-    srcs[count] = NULL;
-    
-    if (len == 0) return;
-    
-    if (result == NULL) {
-        result = (char *)malloc((len + 1) * sizeof(char));
-        
-        if (result == NULL) { /* if malloc faild, return. */ return; }
-    }
-    
-    unsigned long move = 0;
-    for (int i = 0; i < n; i++) {
-        
-        char *src = srcs[i];
-        if (src == NULL) continue;
-        
-        unsigned long src_len = strlen(src);
-        memmove(result + move, src, src_len);
-        move += src_len;
-        memmove(result + move, "\0", 1);
-    }
-    
-    if (*dest != NULL) {
-        free(*dest);
-    }
-    *dest = result;
-    va_end(ap);
-}
-
-
 
 /////////////////////////////
 /////////////////////////////

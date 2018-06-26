@@ -25,7 +25,6 @@
 
 // ---------------
 @property (nonatomic, strong) NSError *err;
-@property (nonatomic, assign) BOOL needSync;
 
 @property (nonatomic, assign) BOOL rollback; // Transaction rollback.
 @end
@@ -129,19 +128,26 @@
     };
 }
 
+- (void)onEnd {
+    self.next = nil;
+    self.err = nil;
+    self.dbManager = nil;
+    _work_q = NULL;
+    _defaultQueue = NULL;
+}
+
 //------
-- (RTSDBExtra *(^)(void))onDone {
-    return ^(void) {
-        if (!self.next) {
-            return self;
-        } else {
-            return self.onWorkQueue(^() {
-                NSError *err;
-                while ([self.next stepWithError:&err]) {}
-                self.err = err;
-            });
-        }
-    };
+- (RTSDBExtra *)onDone {
+    
+    if (!self.next) {
+        return self;
+    } else {
+        return self.onWorkQueue(^() {
+            NSError *err;
+            while ([self.next stepWithError:&err]) {}
+            self.err = err;
+        });
+    }
 }
 
 - (RTSDBExtra *(^)(rt_next_block_t))onStep {
@@ -309,6 +315,14 @@
     };
 }
 
+- (RTSDBExtra *(^)(id, NSDictionary *))onUpdateWithParams {
+    return ^(id obj, NSDictionary *params) {
+        return self.onWorkQueue(^() {
+            [self updateObj:obj withParams:params];
+        });
+    };
+}
+
 - (void)updateObj:(id)obj {
     
     NSError *err;
@@ -316,6 +330,12 @@
     self.err = err;
 }
 
+- (void)updateObj:(id)obj withParams:(NSDictionary<NSString *,id> *)params {
+    
+    NSError *err;
+    [self.dbManager updateObj:obj withParams:params withError:&err];
+    self.err = err;
+}
 // delete
 - (RTSDBExtra *(^)(id obj))onDelete {
     return ^(id obj) {
@@ -421,34 +441,28 @@
     };
 }
 
-- (RTSDBExtra *(^)(void))onBegin {
-    return ^{
-        return self.onWorkQueue(^{
-            self.rollback = NO;
-            [self.dbManager begin];
-        });
-    };
+- (RTSDBExtra *)onBegin {
+    return self.onWorkQueue(^{
+        self.rollback = NO;
+        [self.dbManager begin];
+    });
 }
 
-- (RTSDBExtra *(^)(void))onCommit {
-    return ^{
-        if (self.rollback) {
-            return self;
-        }
-        return self.onWorkQueue(^{
-            [self.dbManager commit];
-        });
-    };
+- (RTSDBExtra *)onCommit {
+    if (self.rollback) {
+        return self;
+    }
+    return self.onWorkQueue(^{
+        [self.dbManager commit];
+    });
 }
 
-- (RTSDBExtra *(^)(void))onRollback {
-    return ^{
-        if (!self.rollback) {
-            return self;
-        }
-        return self.onWorkQueue(^{
-            [self.dbManager rollback];
-        });
-    };
+- (RTSDBExtra *)onRollback {
+    if (!self.rollback) {
+        return self;
+    }
+    return self.onWorkQueue(^{
+        [self.dbManager rollback];
+    });
 }
 @end

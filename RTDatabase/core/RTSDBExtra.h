@@ -16,7 +16,7 @@ typedef void(^rt_step_block_t)(NSDictionary *, int, BOOL *);
 
 typedef void(^rt_select_block_t)(NSArray *);
 
-NS_SWIFT_UNAVAILABLE("Use RTSDBExtra instead!")
+NS_SWIFT_UNAVAILABLE("")
 @interface RTSDBExtra : NSObject
 
 #pragma mark Usual
@@ -27,6 +27,7 @@ NS_SWIFT_UNAVAILABLE("Use RTSDBExtra instead!")
 - (RTSDBExtra *)onMain;
 - (RTSDBExtra *(^)(rt_block_t))onWorkQueue;
 - (void(^)(rt_error_b_t))onError;
+- (void)onEnd;
 
 #pragma mark Normal
 /** open database if path exist */
@@ -61,18 +62,19 @@ NS_SWIFT_UNAVAILABLE("Use RTSDBExtra instead!")
  * onDone() will run out all sqlite3_step() == SQLITE_ROW, and callback nothing.
  * see error call onError().
  */
-- (RTSDBExtra *(^)(void))onDone;
+- (RTSDBExtra *)onDone;
 #pragma mark Default
 /** detial see RTDBDefault */
 - (RTSDBExtra *(^)(Class))onCreate;
 - (RTSDBExtra *(^)(id obj))onInsert;
 - (RTSDBExtra *(^)(id obj))onUpdate;
+- (RTSDBExtra *(^)(id obj, NSDictionary *params))onUpdateWithParams;
 - (RTSDBExtra *(^)(id obj))onDelete;
 - (RTSDBExtra *(^)(NSString *, rt_select_block_t))onFetchDics;
 - (RTSDBExtra *(^)(NSString *, rt_select_block_t))onFetchObjs;
 
 #pragma mark Transaction
-- (RTSDBExtra *(^)(void))onBegin;
-- (RTSDBExtra *(^)(void))onCommit;
-- (RTSDBExtra *(^)(void))onRollback;
+- (RTSDBExtra *)onBegin;
+- (RTSDBExtra *)onCommit;
+- (RTSDBExtra *)onRollback;
 @end

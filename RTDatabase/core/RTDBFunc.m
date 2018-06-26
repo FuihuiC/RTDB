@@ -15,11 +15,12 @@
 const int baseCode = 10000;
 
 void rt_error(NSString *errMsg, int code, NSError **err) {
-    if (err == NULL) return;
-    
     if (errMsg == nil) errMsg = @"Unknown err!";
     
     DELog(@"RTDB: %@", errMsg);
+    
+    if (err == NULL) return;
+    
     *err = [NSError errorWithDomain:NSCocoaErrorDomain code:code userInfo:@{NSLocalizedDescriptionKey: errMsg}];
 }
 

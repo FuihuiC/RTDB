@@ -8,7 +8,7 @@
 
 #import "RTSDBExtra.h"
 
-NS_SWIFT_UNAVAILABLE("Use RTFDB instead!")
+NS_SWIFT_UNAVAILABLE("")
 @interface RTSDB : NSObject
 
 /** RTDB manager */

@@ -73,14 +73,48 @@ typedef enum : NSUInteger {
     return rt_sqlite3_exec(self->_db, [info creatSql], err);
 }
 
+// insert
 - (BOOL)insertObj:(id)obj withError:(NSError * __autoreleasing *)err {
     return [self baseOperate:op_insert withObj:obj withError:err];
+}
+
+// update
+- (BOOL)updateObj:(id)obj withParams:(NSDictionary <NSString *, id>*)params withError:(NSError *__autoreleasing *)err {
+    
+    if (!params && params.count == 0) {
+        return [self updateObj:obj withError:err];
+    }
+    
+    if (obj == nil) {
+        rt_error(@"RTDB recieve an empty obj!", 104, err);
+        return NO;
+    }
+    
+    NSMutableString *mSql = [NSMutableString stringWithString:[NSString stringWithFormat:@"UPDATE %s SET", rt_class_name([obj class])]];
+    
+    NSArray <NSString *>*allKeys = params.allKeys;
+    NSString *key = nil;
+    
+    for (int i = 0; i < allKeys.count; i++) {
+        key = allKeys[i];
+        [mSql appendFormat:@" %@ = ?, ", key];
+    }
+    
+    if ([mSql hasSuffix:@", "]) {
+        [mSql deleteCharactersInRange:NSMakeRange(mSql.length - 2, 2)];
+    }
+    
+    NSInteger idx = [[obj valueForKey:@"_id"] integerValue];
+    [mSql appendFormat:@" where _id = %ld", (long)idx];
+    
+    return [self exceQuery:mSql.copy withParams:params];
 }
 
 - (BOOL)updateObj:(id)obj withError:(NSError * __autoreleasing *)err {
     return [self baseOperate:op_update withObj:obj withError:err];
 }
 
+// delete
 - (BOOL)deleteObj:(id)obj withError:(NSError * __autoreleasing *)err {
     return [self baseOperate:op_delete withObj:obj withError:err];
 }

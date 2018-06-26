@@ -9,7 +9,7 @@
 #import "RTDB.h"
 #import "RTInfo.h"
 
-NS_SWIFT_UNAVAILABLE("Use RTDBExtention instead")
+NS_SWIFT_UNAVAILABLE("")
 @interface RTDBDefault : RTDB
 /**
  Building a table based on the model class
@@ -19,6 +19,7 @@ NS_SWIFT_UNAVAILABLE("Use RTDBExtention instead")
  @return Whether to perform success or not
  */
 - (BOOL)creatTable:(Class)cls withError:(NSError * __autoreleasing *)err;
+
 
 /**
  insert
@@ -33,11 +34,22 @@ NS_SWIFT_UNAVAILABLE("Use RTDBExtention instead")
 /**
  update
 
- @param obj the object of the class which has been build a table. If the object has not a property _id typed of integer, it will be error.
+ @param obj The object of the class which has been build a table. If the object has not a property _id typed of integer, it will be error.
+ @param params columns To update;
+ @param err OUT: error msg
+ @return Whether to perform success or not
+ */
+- (BOOL)updateObj:(id)obj withParams:(NSDictionary <NSString *, id>*)params withError:(NSError *__autoreleasing *)err;
+
+/**
+ update
+
+ @param obj The object of the class which has been build a table. If the object has not a property _id typed of integer, it will be error.
  @param err OUT: error msg
  @return Whether to perform success or not
  */
 - (BOOL)updateObj:(id)obj withError:(NSError * __autoreleasing *)err;
+
 
 /**
  delete
