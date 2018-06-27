@@ -63,16 +63,16 @@ These methods are actually wrapper around `sqlite3_prepare_v2()`, `sqlite3_step(
 */  
 
 [db execQuery:
-@"INSERT INTO DB (name, data, n, date, f, d, c, uc) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-@"_name",
-[@"test" dataUsingEncoding:NSUTF8StringEncoding],
-[NSDate date],
-[NSNumber numberWithDouble:123.213124324],
-@(1.2),
-@(1.2123124),
-@(-'c'),
-@('c'),
-nil];
+              @"INSERT INTO DB (name, data, n, date, f, d, c, uc) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+              @"_name",
+              [@"test" dataUsingEncoding:NSUTF8StringEncoding],
+              [NSDate date],
+              [NSNumber numberWithDouble:123.213124324],
+              @(1.2),
+              @(1.2123124),
+              @(-'c'),
+              @('c'),
+              nil];
 ```
 Methods begin with `execSql` return an object of RTNext. If sql string has a 'SELECT', call these motheds.  
 The object type of RTNext can call `step` to see if there is any next step. Or use `enumAllSteps` `enumAllColumns` to enumerate every step's values.  
@@ -83,11 +83,11 @@ The object type of RTNext can call `step` to see if there is any next step. Or u
 RTNext *next = [db execSql:@"SELECT * FROM DB", nil];
 
 [next enumAllSteps:^(NSDictionary *dic, int step, BOOL *stop, NSError *err) {
-if (!err) {
-NSLog(@"%@", dic);
-} else {
-// err handle.
-}
+   if (!err) {
+     NSLog(@"%@", dic);
+   } else {
+     // err handle.
+   }
 }];
 
 BOOL step = [next step]; // When sqlite3_step() == SQLITE_ROW, return YES.
@@ -156,16 +156,16 @@ db.onDefault
 // insert
 db.onDefault
 .execArgs(
-@"INSERT INTO DB (name, data, n, date, f, d, c, uc) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-@"name",
-[@"name" dataUsingEncoding:NSUTF8StringEncoding],
-@(1),
-[NSDate date],
-@(1.412),
-@(0.31231),
-@(-'e'),
-@('e'),
-nil)
+    @"INSERT INTO DB (name, data, n, date, f, d, c, uc) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+    @"name",
+    [@"name" dataUsingEncoding:NSUTF8StringEncoding],
+    @(1),
+    [NSDate date],
+    @(1.412),
+    @(0.31231),
+    @(-'e'),
+    @('e'),
+    nil)
 .onDone()
 .onError(^(NSError *err) {
     NSLog(@"%@", err);
@@ -215,9 +215,9 @@ db.onDefault
 // select    
 db.onDefault
 .onFetchDics(@"SELECT * FROM DB order by _id", ^(NSArray <NSDictionary *>* result) {
-for (NSDictionary *dic in result) {
-    NSLog(@"%@", dic);
-}
+    for (NSDictionary *dic in result) {
+        NSLog(@"%@", dic);
+    }
 })
 .onError(^(NSError *err) {
     NSLog(@"%@", err);
