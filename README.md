@@ -14,6 +14,8 @@ See more:
 
 #### Installation with CocoaPods
 ```
+platform :ios, '8.2'
+
 pod 'RTDatabase'
 ```
 #### Installation by cloning the repository
