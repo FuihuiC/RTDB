@@ -140,7 +140,7 @@ RTSDB *db = [[RTSDB alloc] init];
 db.onDefault
 .onOpen(@"~/RTDB.sqlite3")
 .onError(^(NSError *err) {
-NSLog(@"%@", err);
+    NSLog(@"%@", err);
 });
 
 // creat table
@@ -150,7 +150,7 @@ db.onDefault
 'REAL', 'd' 'REAL', 'c' 'INTEGER', 'uc' 'INTEGER')", nil)
 .onDone()
 .onError(^(NSError *err) {
-NSLog(@"%@", err);
+    NSLog(@"%@", err);
 });
 
 // insert
@@ -168,19 +168,19 @@ db.onDefault
 nil)
 .onDone()
 .onError(^(NSError *err) {
-NSLog(@"%@", err);
+    NSLog(@"%@", err);
 });
 
 // select
 db.onDefault
 .execArgs(@"SELECT * FROM DB", nil) 0))
 .onEnum(^(NSDictionary *dic, int step, BOOL *stop){
-NSLog(@"%@", dic);
-NSLog(@"%d", step);
-NSLog(@"%@", [NSThread currentThread]);
+    NSLog(@"%@", dic);
+    NSLog(@"%d", step);
+    NSLog(@"%@", [NSThread currentThread]);
 })
 .onError(^(NSError *err) {
-NSLog(@"%@", err);
+    NSLog(@"%@", err);
 });
 
 
@@ -195,59 +195,59 @@ DB *obj = [[DB alloc] init];
 db.onDefault
 .onInsert(obj)
 .onError(^(NSError *err) {
-NSLog(@"%@", err);
+    NSLog(@"%@", err);
 });  
 
 // update
 db.onDefault
 .onUpdate(obj)
 .onError(^(NSError *err) {
-NSLog(@"%@", err);
+    NSLog(@"%@", err);
 });
 
 // delete
 db.onDefault
 .onDelete(obj)
 .onError(^(NSError *err) {
-NSLog(@"%@", err);
+    NSLog(@"%@", err);
 });
 
 // select    
 db.onDefault
 .onFetchDics(@"SELECT * FROM DB order by _id", ^(NSArray <NSDictionary *>* result) {
 for (NSDictionary *dic in result) {
-NSLog(@"%@", dic);
+    NSLog(@"%@", dic);
 }
 })
 .onError(^(NSError *err) {
-NSLog(@"%@", err);
+    NSLog(@"%@", err);
 });
 
 //
 db.onDefault
 .onFetchObjs(@"", ^(NSArray <DB *>*result) {
-for (DB *obj in result) {
-NSLog(@"%@", obj);
-}
+    for (DB *obj in result) {
+       NSLog(@"%@", obj);
+    }
 })
 .onError(^(NSError *err) {
-NSLog(@"%@", err);
+    NSLog(@"%@", err);
 });
 
 db.onDefault
 .execArgs(@"SELECT * FROM DB")
 .onStep(^(RTNext *next) {
-int count = [next columnCountOfRow];
-while ([next step]) {
-for (int i = 0; i < count; i++) {
-NSString *name = [next nameForColumn:i];
-id value = [next valueForColumn:i];
-NSLog(@"name: %@, value = %@", name, value);
-}
-}
+    int count = [next columnCountOfRow];
+    while ([next step]) {
+      for (int i = 0; i < count; i++) {
+          NSString *name = [next nameForColumn:i];
+          id value = [next valueForColumn:i];
+          NSLog(@"name: %@, value = %@", name, value);
+      }
+    }
 })
 .onError(^(NSError *err) {
-NSLog(@"%@", err)
+    NSLog(@"%@", err)
 });
 ```
 
