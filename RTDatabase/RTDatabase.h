@@ -21,3 +21,5 @@ FOUNDATION_EXPORT const unsigned char RTDatabaseVersionString[];
 #else
 #import <RTDatabase/RTDB.h>
 #endif
+
+#import <RTDatabase/RTSql.h>
