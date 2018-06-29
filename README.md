@@ -14,6 +14,8 @@ See more:
 
 #### Installation with CocoaPods
 ```
+platform :ios, '8.2'
+
 pod 'RTDatabase'
 ```
 #### Installation by cloning the repository
@@ -61,16 +63,16 @@ These methods are actually wrapper around `sqlite3_prepare_v2()`, `sqlite3_step(
 */  
 
 [db execQuery:
-@"INSERT INTO DB (name, data, n, date, f, d, c, uc) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-@"_name",
-[@"test" dataUsingEncoding:NSUTF8StringEncoding],
-[NSDate date],
-[NSNumber numberWithDouble:123.213124324],
-@(1.2),
-@(1.2123124),
-@(-'c'),
-@('c'),
-nil];
+              @"INSERT INTO DB (name, data, n, date, f, d, c, uc) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+              @"_name",
+              [@"test" dataUsingEncoding:NSUTF8StringEncoding],
+              [NSDate date],
+              [NSNumber numberWithDouble:123.213124324],
+              @(1.2),
+              @(1.2123124),
+              @(-'c'),
+              @('c'),
+              nil];
 ```
 Methods begin with `execSql` return an object of RTNext. If sql string has a 'SELECT', call these motheds.  
 The object type of RTNext can call `step` to see if there is any next step. Or use `enumAllSteps` `enumAllColumns` to enumerate every step's values.  
@@ -81,11 +83,11 @@ The object type of RTNext can call `step` to see if there is any next step. Or u
 RTNext *next = [db execSql:@"SELECT * FROM DB", nil];
 
 [next enumAllSteps:^(NSDictionary *dic, int step, BOOL *stop, NSError *err) {
-if (!err) {
-NSLog(@"%@", dic);
-} else {
-// err handle.
-}
+   if (!err) {
+     NSLog(@"%@", dic);
+   } else {
+     // err handle.
+   }
 }];
 
 BOOL step = [next step]; // When sqlite3_step() == SQLITE_ROW, return YES.
@@ -138,7 +140,7 @@ RTSDB *db = [[RTSDB alloc] init];
 db.onDefault
 .onOpen(@"~/RTDB.sqlite3")
 .onError(^(NSError *err) {
-NSLog(@"%@", err);
+    NSLog(@"%@", err);
 });
 
 // creat table
@@ -148,37 +150,37 @@ db.onDefault
 'REAL', 'd' 'REAL', 'c' 'INTEGER', 'uc' 'INTEGER')", nil)
 .onDone()
 .onError(^(NSError *err) {
-NSLog(@"%@", err);
+    NSLog(@"%@", err);
 });
 
 // insert
 db.onDefault
 .execArgs(
-@"INSERT INTO DB (name, data, n, date, f, d, c, uc) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-@"name",
-[@"name" dataUsingEncoding:NSUTF8StringEncoding],
-@(1),
-[NSDate date],
-@(1.412),
-@(0.31231),
-@(-'e'),
-@('e'),
-nil)
+    @"INSERT INTO DB (name, data, n, date, f, d, c, uc) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+    @"name",
+    [@"name" dataUsingEncoding:NSUTF8StringEncoding],
+    @(1),
+    [NSDate date],
+    @(1.412),
+    @(0.31231),
+    @(-'e'),
+    @('e'),
+    nil)
 .onDone()
 .onError(^(NSError *err) {
-NSLog(@"%@", err);
+    NSLog(@"%@", err);
 });
 
 // select
 db.onDefault
 .execArgs(@"SELECT * FROM DB", nil) 0))
 .onEnum(^(NSDictionary *dic, int step, BOOL *stop){
-NSLog(@"%@", dic);
-NSLog(@"%d", step);
-NSLog(@"%@", [NSThread currentThread]);
+    NSLog(@"%@", dic);
+    NSLog(@"%d", step);
+    NSLog(@"%@", [NSThread currentThread]);
 })
 .onError(^(NSError *err) {
-NSLog(@"%@", err);
+    NSLog(@"%@", err);
 });
 
 
@@ -193,59 +195,59 @@ DB *obj = [[DB alloc] init];
 db.onDefault
 .onInsert(obj)
 .onError(^(NSError *err) {
-NSLog(@"%@", err);
+    NSLog(@"%@", err);
 });  
 
 // update
 db.onDefault
 .onUpdate(obj)
 .onError(^(NSError *err) {
-NSLog(@"%@", err);
+    NSLog(@"%@", err);
 });
 
 // delete
 db.onDefault
 .onDelete(obj)
 .onError(^(NSError *err) {
-NSLog(@"%@", err);
+    NSLog(@"%@", err);
 });
 
 // select    
 db.onDefault
 .onFetchDics(@"SELECT * FROM DB order by _id", ^(NSArray <NSDictionary *>* result) {
-for (NSDictionary *dic in result) {
-NSLog(@"%@", dic);
-}
+    for (NSDictionary *dic in result) {
+        NSLog(@"%@", dic);
+    }
 })
 .onError(^(NSError *err) {
-NSLog(@"%@", err);
+    NSLog(@"%@", err);
 });
 
 //
 db.onDefault
 .onFetchObjs(@"", ^(NSArray <DB *>*result) {
-for (DB *obj in result) {
-NSLog(@"%@", obj);
-}
+    for (DB *obj in result) {
+       NSLog(@"%@", obj);
+    }
 })
 .onError(^(NSError *err) {
-NSLog(@"%@", err);
+    NSLog(@"%@", err);
 });
 
 db.onDefault
 .execArgs(@"SELECT * FROM DB")
 .onStep(^(RTNext *next) {
-int count = [next columnCountOfRow];
-while ([next step]) {
-for (int i = 0; i < count; i++) {
-NSString *name = [next nameForColumn:i];
-id value = [next valueForColumn:i];
-NSLog(@"name: %@, value = %@", name, value);
-}
-}
+    int count = [next columnCountOfRow];
+    while ([next step]) {
+      for (int i = 0; i < count; i++) {
+          NSString *name = [next nameForColumn:i];
+          id value = [next valueForColumn:i];
+          NSLog(@"name: %@, value = %@", name, value);
+      }
+    }
 })
 .onError(^(NSError *err) {
-NSLog(@"%@", err)
+    NSLog(@"%@", err)
 });
 ```
 
