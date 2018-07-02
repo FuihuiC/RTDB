@@ -8,8 +8,26 @@
 
 #import "RTSql.h"
 
+
+typedef enum : NSUInteger {
+    RTSQL_CREATE = 1,
+    RTSQL_INSERT,
+    RTSQL_UPDATE,
+    RTSQL_DELETE
+} RTSQLType;
+
+@interface RTSubSql ()
+@property (nonatomic, assign) RTSQLType opType;
+- (NSString *)build;
+@end
+
+// --------------------------------------------------
+// --------------------------------------------------
+// --------------------------------------------------
 @interface RTSql ()
 @property (nonatomic, strong) NSMutableString *mSql;
+@property (nonatomic, strong) RTSubSql *subSql;
+@property (nonatomic, assign) RTSQLType opType;
 @end
 
 @implementation RTSql
@@ -20,6 +38,7 @@
     }
     return self;
 }
+
 - (NSMutableString *)mSql {
     if (_mSql == nil) {
         _mSql = [NSMutableString string];
@@ -27,6 +46,22 @@
     return _mSql;
 }
 
+- (RTSubSql *)subSql {
+    if (_subSql == nil) {
+        _subSql = [[RTSubSql alloc] init];
+    }
+    return _subSql;;
+}
+
+- (RTSql *(^)(void(^)(RTSubSql *)))columns {
+    return ^(void(^block)(RTSubSql *)) {
+        NSAssert(block != nil, @"Columns can not recieve a empty block!");
+        self.subSql.opType = self.opType;
+        block(self.subSql);
+        [self.mSql appendString:[self.subSql build]];
+        return self;
+    };
+}
 #pragma mark -
 - (RTSql *(^)(NSString *))append {
     return ^(NSString *args) {
@@ -36,6 +71,7 @@
 }
 // CREATE
 - (RTSql *(^)(NSString *))CREATE {
+    self.opType = RTSQL_CREATE;
     return ^(NSString *args) {
         [self.mSql appendFormat:@"CREATE TABLE if not exists '%@'", args];
         return self;
@@ -204,23 +240,6 @@
         return self;
     };
 }
-// types
-- (RTSql *)integer {
-    [self.mSql appendString:@" INTEGER"];
-    return self;
-}
-- (RTSql *)text {
-    [self.mSql appendString:@" TEXT"];
-    return self;
-}
-- (RTSql *)blob {
-    [self.mSql appendString:@" BLOB"];
-    return self;
-}
-- (RTSql *)real {
-    [self.mSql appendString:@" REAL"];
-    return self;
-}
 
 //brackets
 - (RTSql *)leftBracket {
@@ -265,5 +284,164 @@
         [self.mSql deleteCharactersInRange:NSMakeRange(0, self.mSql.length)];
     }
     return self;
+}
+@end
+
+// --------------------------------------------------
+
+
+@interface RTSubCreate ()
+
+
+@end
+
+@implementation RTSubCreate
+- (RTSubCreate *(^)(NSString *))TEXT {
+    return ^(NSString *column) {
+        
+        return self;
+    };
+}
+
+- (RTSubCreate *(^)(NSString *))INTEGER {
+    return ^(NSString *column) {
+        
+        return self;
+    };
+}
+
+- (RTSubCreate *(^)(NSString *))BLOB {
+    return ^(NSString *column) {
+        
+        return self;
+    };
+}
+
+- (RTSubCreate *(^)(NSString *))REAL {
+    return ^(NSString *column) {
+        
+        return self;
+    };
+}
+
+- (RTSubCreate *)notNull  {
+    return self;
+}
+
+- (RTSubCreate *)primaryKey  {
+    return self;
+}
+
+- (RTSubCreate *)autoincrement  {
+    return self;
+}
+
+@end
+// --------------------------------------------------
+// --------------------------------------------------
+
+typedef enum : NSUInteger {
+    RTSubColumnTEXT   = 1,
+    RTSubColumnINTEGER,
+    RTSubColumnBLOB,
+    RTSubColumnREAl
+} RTSubColumnType;
+
+@interface RTSubSql ()
+@property (nonatomic, strong) NSMutableString *mStrResult;
+@end
+
+@implementation RTSubSql
+
+- (instancetype)init {
+    if (self = [super init]) {
+        _mStrResult = [NSMutableString string];
+    }
+    return self;
+}
+
+- (NSString *)build {
+    if (self.opType == RTSQL_CREATE) {
+        return [NSString stringWithFormat:@"(%@)", _mStrResult];
+    }
+    return _mStrResult.copy;
+}
+
+- (void)column:(NSString *)column withType:(RTSubColumnType)type {
+    switch (self.opType) {
+        case RTSQL_CREATE:
+            [self createColumn:column withType:type];
+            break;
+        default:
+            break;
+    }
+}
+
+- (void)createColumn:(NSString *)column withType:(RTSubColumnType)type {
+    NSString *format = @", '%@' '%@'";
+    if (_mStrResult.length == 0) {
+        format = @"'%@' '%@'";
+    }
+    
+    switch (type) {
+        case RTSubColumnTEXT: {
+            [_mStrResult appendFormat:format, column, @"TEXT"];
+        }
+            break;
+        case RTSubColumnINTEGER: {
+            [_mStrResult appendFormat:format, column, @"INTEGER"];
+        }
+            break;
+        case RTSubColumnBLOB: {
+            [_mStrResult appendFormat:format, column, @"BLOB"];
+        }
+            break;
+        case RTSubColumnREAl: {
+            [_mStrResult appendFormat:format, column, @"REAL"];
+        }
+            break;
+        default:
+            break;
+    }
+}
+
+- (RTSubSql *(^)(NSString *))TEXT {
+    return ^(NSString *column) {
+        [self column:column withType:RTSubColumnTEXT];
+        return self;
+    };
+}
+
+- (RTSubSql *(^)(NSString *))INTEGER {
+    return ^(NSString *column) {
+        [self column:column withType:RTSubColumnINTEGER];
+        return self;
+    };
+}
+
+- (RTSubSql *(^)(NSString *))BLOB {
+    return ^(NSString *column) {
+        [self column:column withType:RTSubColumnBLOB];
+        return self;
+    };
+}
+
+- (RTSubSql *(^)(NSString *))REAL {
+    return ^(NSString *column) {
+        [self column:column withType:RTSubColumnREAl];
+        return self;
+    };
+}
+
+- (RTSubSql *)notNull {
+    [self.mStrResult appendFormat:@" NOT NULL"];
+    return self;
+}
+
+- (RTSubSql *(^)(NSString *))add {
+    return ^(NSString *args) {
+        [self.mStrResult appendString:args];
+        return self;
+    };
 }
 @end

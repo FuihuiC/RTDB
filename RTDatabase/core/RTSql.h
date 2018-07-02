@@ -10,15 +10,24 @@
 
 #import "RTPreset.h"
 
-@class RTSql;
+
+
+@class RTSql, RTSubSql;
+
+//typedef void(^RTSubSQLBlock)(RTSubSql *);
+
 typedef RTSql *(^RTSQLBuildBlock)(NSString *);
 
 @interface RTSql : NSObject
 
 - (RTSql *(^)(NSString *))append;
 
+- (RTSql *(^)(void(^)(RTSubSql *)))columns;
+
 // CREATE
 - (RTSql *(^)(NSString *))CREATE;
+
+
 - (RTSql *(^)(NSString *))columnINTEGER;
 - (RTSql *(^)(NSString *))columnTEXT;
 - (RTSql *(^)(NSString *))columnBLOB;
@@ -45,12 +54,6 @@ typedef RTSql *(^RTSQLBuildBlock)(NSString *);
 
 - (RTSql *(^)(NSString *))from;
 
-// ------ type --------
-- (RTSql *)integer;
-- (RTSql *)text;
-- (RTSql *)blob;
-- (RTSql *)real;
-
 // ------ interpunction --------
 //brackets
 - (RTSql *)leftBracket;
@@ -65,3 +68,27 @@ typedef RTSql *(^RTSQLBuildBlock)(NSString *);
 - (NSString *)end;
 - (RTSql *)reset;
 @end
+
+@interface RTSubCreate : NSObject
+- (RTSubCreate *(^)(NSString *))TEXT;
+- (RTSubCreate *(^)(NSString *))INTEGER;
+- (RTSubCreate *(^)(NSString *))BLOB;
+- (RTSubCreate *(^)(NSString *))REAL;
+- (RTSubCreate *)notNull;
+
+- (RTSubCreate *)primaryKey;
+- (RTSubCreate *)autoincrement;
+@end
+
+@interface RTSubSql : NSObject
+
+- (RTSubSql *(^)(NSString *))TEXT;
+- (RTSubSql *(^)(NSString *))INTEGER;
+- (RTSubSql *(^)(NSString *))BLOB;
+- (RTSubSql *(^)(NSString *))REAL;
+- (RTSubSql *)notNull;
+
+- (RTSubSql *(^)(NSString *))add;
+
+@end
+
