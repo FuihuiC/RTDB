@@ -14,8 +14,7 @@ typedef void(^PPSQLSubBlock)(id<PPSQLProtocol>);
 typedef void(^PPSQLTermBlock)(PPTerm *);
 
 // --------------PPSQL---------------
-@interface PPSQL : NSObject <PPSQLProtocol>
-
+@interface PPSQL : NSObject 
 @property (nonatomic, strong, readonly) NSMutableString *mStrResult;
 
 
@@ -25,7 +24,7 @@ typedef void(^PPSQLTermBlock)(PPTerm *);
 - (PPSQL *(^)(NSString *))add;
 @property (nonatomic, readonly) PPSQL *(^add)(NSString *);
 
-
+- (NSString *)build;
 /**
  * CREATE default sql is "CREATE TABLE if not exists 'table name'"
  * The subs followed by CREATE will call back an obj typed of id<PPSQLProtocol>.
@@ -83,10 +82,11 @@ typedef void(^PPSQLTermBlock)(PPTerm *);
 @property (nonatomic, readonly) PPSQL *(^DELETE)(NSString *);
 
 /**
- * SELECT * FROM %@
+ * SELECT
  */
-- (PPSQL *(^)(NSString *))SELECT;
-@property (nonatomic, readonly) PPSQL *(^SELECT)(NSString *);
+- (PPSQL *)SELECT;
+//- (PPSQL *(^)(NSString *))SELECT;
+//@property (nonatomic, readonly) PPSQL *(^SELECT)(NSString *);
 - (PPSQL *)distinct;
 
 

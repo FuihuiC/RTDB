@@ -21,7 +21,7 @@ _mStrResult = [NSMutableString string]; \
 return self; \
 }
 
-@protocol PPSQLProtocol <NSObject>
+@protocol PPSQLProtocol
 
 @required
 @property (nonatomic, strong, readonly) NSMutableString *mStrResult;
@@ -30,6 +30,7 @@ return self; \
 - (id<PPSQLProtocol>(^)(NSString *))add;
 
 @optional
+// creat sql only
 - (id<PPSQLProtocol> (^)(NSString *))TEXT;
 - (id<PPSQLProtocol> (^)(NSString *))INTEGER;
 - (id<PPSQLProtocol> (^)(NSString *))BLOB;
@@ -38,7 +39,10 @@ return self; \
 - (id<PPSQLProtocol>)primaryKey;
 - (id<PPSQLProtocol>)autoincrement;
 
-// insert update only
+// select only
+- (id<PPSQLProtocol> (^)(NSString *))from;
+
+// select update insert
 - (id<PPSQLProtocol> (^)(NSString *))column;
 
 @end

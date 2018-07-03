@@ -8,7 +8,42 @@
 
 #import "PPSubSQL.h"
 
+// ---------------------------------------------------
+// ---------------------------------------------------
+#pragma mark - PPSQLSelect
+// ---------------------------------------------------
+@implementation PPSQLSelect
+INIT_WITH_MSTRING
 
+- (id<PPSQLProtocol> (^)(NSString *))add {
+    return ^(NSString *args) {
+        [self.mStrResult appendFormat:@" %@", args];
+        return self;
+    };
+}
+
+- (NSString *)build {
+    return self.mStrResult.copy;
+}
+
+- (PPSQLSelect *(^)(NSString *))from {
+    return ^(NSString *tableName) {
+        [self.mStrResult appendFormat:@" FROM %@", tableName];
+        return self;
+    };
+}
+
+- (PPSQLSelect *(^)(NSString *))column {
+    return ^(NSString *col) {
+        NSString *format = @", %@";
+        if (self.mStrResult.length == 0) {
+            format = @" %@";
+        }
+        [self.mStrResult appendFormat:format, col];
+        return self;
+    };
+}
+@end
 // ---------------------------------------------------
 // ---------------------------------------------------
 #pragma mark - PPSQLCreate

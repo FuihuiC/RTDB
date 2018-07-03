@@ -9,6 +9,15 @@
 #import <Foundation/Foundation.h>
 #import "PPSQLProtocol.h"
 
+@interface PPSQLSelect : NSObject <PPSQLProtocol>
+@property (nonatomic, strong, readonly) NSMutableString *mStrResult;
+- (PPSQLSelect *(^)(NSString *))from;
+@property (nonatomic, readonly) PPSQLSelect *(^from)(NSString *);
+
+- (PPSQLSelect *(^)(NSString *))column;
+@property (nonatomic, readonly) PPSQLSelect *(^column)(NSString *);
+@end
+
 // --------------PPSQLCreate---------------
 @interface PPSQLCreate : NSObject <PPSQLProtocol>
 @property (nonatomic, strong, readonly) NSMutableString *mStrResult;
@@ -40,6 +49,7 @@
 @property (nonatomic, readonly) PPSQLInsert *(^column)(NSString *);
 @end
 
+// --------------PPSQLUpdate---------------
 @interface PPSQLUpdate : NSObject <PPSQLProtocol>
 @property (nonatomic, strong, readonly) NSMutableString *mStrResult;
 

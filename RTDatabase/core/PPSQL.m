@@ -80,18 +80,15 @@ INIT_WITH_MSTRING
     };
 }
 
-- (PPSQL *(^)(NSString *))SELECT {
+- (PPSQL *)SELECT {
     [self reset];
-    self.opType = PPSQLOperateDelete;
-    return ^(NSString *tableName) {
-        NSAssert(tableName && tableName.length > 0, @"Table name can not be empty");
-        [self.mStrResult appendFormat:@"SELECT * FROM %@", tableName];
-        return self;
-    };
+    self.opType = PPSQLOperateSelect;
+    self.add(@"SELECT");
+    return self;
 }
 
 - (PPSQL *)distinct {
-    [self.mStrResult appendString:@" DISTINCT"];
+    self.add(@" DISTINCT");
     return self;
 }
 
@@ -113,7 +110,9 @@ INIT_WITH_MSTRING
             subOP = [[PPSQLCreate alloc] init];
         }
             break;
-        case PPSQLOperateSelect: {}
+        case PPSQLOperateSelect: {
+            subOP = [[PPSQLSelect alloc] init];
+        }
             break;
         case PPSQLOperateInsert: {
             subOP = [[PPSQLInsert alloc] init];
