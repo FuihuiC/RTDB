@@ -41,7 +41,7 @@ RTDB *db = [[RTDB alloc] init];
 NSError *err;
 BOOL result = [db openWithPath:@"~/RTDB.sqlite3" withError:&err];
 if (!result) {
-NSLog(@"%@". err);
+    NSLog(@"%@". err);
 }
 ```  
 - EXECUTE 
@@ -63,16 +63,16 @@ These methods are actually wrapper around `sqlite3_prepare_v2()`, `sqlite3_step(
 */  
 
 [db execQuery:
-              @"INSERT INTO DB (name, data, n, date, f, d, c, uc) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-              @"_name",
-              [@"test" dataUsingEncoding:NSUTF8StringEncoding],
-              [NSDate date],
-              [NSNumber numberWithDouble:123.213124324],
-              @(1.2),
-              @(1.2123124),
-              @(-'c'),
-              @('c'),
-              nil];
+@"INSERT INTO DB (name, data, n, date, f, d, c, uc) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+@"_name",
+[@"test" dataUsingEncoding:NSUTF8StringEncoding],
+[NSDate date],
+[NSNumber numberWithDouble:123.213124324],
+@(1.2),
+@(1.2123124),
+@(-'c'),
+@('c'),
+nil];
 ```
 Methods begin with `execSql` return an object of RTNext. If sql string has a 'SELECT', call these motheds.  
 The object type of RTNext can call `step` to see if there is any next step. Or use `enumAllSteps` `enumAllColumns` to enumerate every step's values.  
@@ -83,11 +83,11 @@ The object type of RTNext can call `step` to see if there is any next step. Or u
 RTNext *next = [db execSql:@"SELECT * FROM DB", nil];
 
 [next enumAllSteps:^(NSDictionary *dic, int step, BOOL *stop, NSError *err) {
-   if (!err) {
-     NSLog(@"%@", dic);
-   } else {
-     // err handle.
-   }
+    if (!err) {
+    NSLog(@"%@", dic);
+    } else {
+    // err handle.
+    }
 }];
 
 BOOL step = [next step]; // When sqlite3_step() == SQLITE_ROW, return YES.
@@ -156,16 +156,16 @@ db.onDefault
 // insert
 db.onDefault
 .execArgs(
-    @"INSERT INTO DB (name, data, n, date, f, d, c, uc) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-    @"name",
-    [@"name" dataUsingEncoding:NSUTF8StringEncoding],
-    @(1),
-    [NSDate date],
-    @(1.412),
-    @(0.31231),
-    @(-'e'),
-    @('e'),
-    nil)
+@"INSERT INTO DB (name, data, n, date, f, d, c, uc) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+@"name",
+[@"name" dataUsingEncoding:NSUTF8StringEncoding],
+@(1),
+[NSDate date],
+@(1.412),
+@(0.31231),
+@(-'e'),
+@('e'),
+nil)
 .onDone()
 .onError(^(NSError *err) {
     NSLog(@"%@", err);
@@ -227,7 +227,7 @@ db.onDefault
 db.onDefault
 .onFetchObjs(@"", ^(NSArray <DB *>*result) {
     for (DB *obj in result) {
-       NSLog(@"%@", obj);
+        NSLog(@"%@", obj);
     }
 })
 .onError(^(NSError *err) {
@@ -237,26 +237,69 @@ db.onDefault
 db.onDefault
 .execArgs(@"SELECT * FROM DB")
 .onStep(^(RTNext *next) {
-    int count = [next columnCountOfRow];
+int count = [next columnCountOfRow];
     while ([next step]) {
-      for (int i = 0; i < count; i++) {
-          NSString *name = [next nameForColumn:i];
-          id value = [next valueForColumn:i];
-          NSLog(@"name: %@, value = %@", name, value);
-      }
+        for (int i = 0; i < count; i++) {
+            NSString *name = [next nameForColumn:i];
+            id value = [next valueForColumn:i];
+            NSLog(@"name: %@, value = %@", name, value);
+        }
     }
 })
 .onError(^(NSError *err) {
     NSLog(@"%@", err)
 });
 ```
+* Prepare SQL
 
-* Asynchronous  
+RTDB provides a quick solution for building SQL strings.Concretely implemented in classes beginning with PP.  
+All classes starting with PP comply with the protocol PPSQLProtocol.The protocol has two methods(build, add) and a property(mStrResult) which are @repuired, and several optional methods.  
+The required property named mStrResult is the container of sql string. 
 
-RTSDB & RTSDBExtra provide an asynchronous scheme.  
-If set the RTSDB instance's `defaultQueue` typed of `dispatch_queue_t`, and then all operation will be called on this queue.  
-And you can call `onQueue()` or `onMain` change the queue next. The `onQueue()` and `onMain` will not change the defaultQueue.
-Calling `onDefault` will change back defaultQueue.
+PPSQL provides several entry methods for creating SQL for SQLite common operations.   
+1. If you need to add column to the SQL string, call the `subs`  method after calling the corresponding entry method.  
+The method `subs` will callback an object followed the protocol PPSQLProtocol. Look at the `PPSubSQL.h` file in detail.
+```
+e.g.
+/**
+* To create tables, 
+* you need to tell SQLite all columns and every column's database type.
+*/
+PPSQL *pp = [[PPSQL alloc] init];
+NSString *sql = pp.CREATE(@"Person").subs(^(id<PPSQLProtocol> sub) {
+sub.INTEGER(@"_id").primaryKey.autoincrement.notNull
+    .TEXT(@"name")
+    .INTEGER(@"age")
+    .REAL(@"height")
+    .BLOB(@"info");
+}).build;
+
+NSLog(@"%@", sql);
+
+Print Result:
+-> CREATE TABLE if not exists 'Person'
+('_id' 'INTEGER' primary key autoincrement NOT NULL,
+'name' 'TEXT', 'age' 'INTEGER', 'height' 'REAL', 'info' 'BLOB')
+```  
+2. If you want to add qualifying conditions in the SQL string, call the method (`terms`).  
+The method terms will callback an object typed of `PPTerm`.`PPTerm` contains many SQLite SQL clauses. Please select them according to requirements.
+```
+e.g.
+sql = pp.UPDATE(@"Person").subs(^(id<PPSQLProtocol> sub) {
+sub.column(@"age");
+}).terms(^(PPTerm *term) {
+term.where.equal(@"_id", @(1));
+}).build;
+
+NSLog(@"%@", sql);
+
+Print Result:
+
+-> UPDATE Person SET age = ? WHERE _id = 1
+```
+3. Custom SQL string, please try calling method `add`.
+#### Pay Attention:
+>The indefinite parameters need to end with nil.
 
 
 ## Author
