@@ -7,110 +7,104 @@
 //
 
 #import <Foundation/Foundation.h>
+#import "PPTerm.h"
+#import "PPSubSQL.h"
 
-@protocol RTSubSQLProtocol;
-@class PPWhere, PPConditon;
-
-typedef void(^PPSQLSubBlock)(id<RTSubSQLProtocol>);
-typedef void(^PPSQLWhereBlock)(PPWhere *);
-typedef void(^PPSQLConditionBlock)(PPConditon *);
-// -----------------------------
-@protocol RTSubSQLProtocol <NSObject>
-
-@required
-@property (nonatomic, strong, readonly) NSMutableString *mStrResult;
-
-- (NSString *)build;
-- (id<RTSubSQLProtocol>(^)(NSString *))add;
-
-@optional
-- (id<RTSubSQLProtocol> (^)(NSString *))TEXT;
-- (id<RTSubSQLProtocol> (^)(NSString *))INTEGER;
-- (id<RTSubSQLProtocol> (^)(NSString *))BLOB;
-- (id<RTSubSQLProtocol> (^)(NSString *))REAL;
-- (id<RTSubSQLProtocol>)notNull;
-- (id<RTSubSQLProtocol>)primaryKey;
-- (id<RTSubSQLProtocol>)autoincrement;
-
-// insert update only
-- (id<RTSubSQLProtocol> (^)(NSString *))column;
-
-@end
+typedef void(^PPSQLSubBlock)(id<PPSQLProtocol>);
+typedef void(^PPSQLTermBlock)(PPTerm *);
 
 // --------------PPSQL---------------
-@interface PPSQL : NSObject <RTSubSQLProtocol>
+@interface PPSQL : NSObject <PPSQLProtocol>
+
 @property (nonatomic, strong, readonly) NSMutableString *mStrResult;
 
-- (PPSQL *(^)(NSString *))CREATE;
-- (PPSQL *(^)(NSString *))INSERT;
-- (PPSQL *(^)(NSString *))UPDATE;
-- (PPSQL *(^)(NSString *))DELETE;
 
-- (PPSQL *(^)(NSString *))SELECT;
-
-- (PPSQL *(^)(PPSQLSubBlock))subs;
-
-- (PPSQL *(^)(PPSQLWhereBlock))where;
-
-- (PPSQL *(^)(PPSQLConditionBlock))terms;
-@end
-
-// --------------PPConditon---------------
-@interface PPConditon : NSObject <RTSubSQLProtocol>
-@property (nonatomic, strong, readonly) NSMutableString *mStrResult;
-
-- (PPConditon *(^)(NSUInteger))limit;
-- (PPConditon *(^)(NSString *))orderBy;
 /**
- * Orders must be end with nil;
+ * Append a custom string.
  */
-- (PPConditon *(^)(NSString *, ...))ordersBy;
-- (PPConditon *)desc; // Descending order
-- (PPConditon *)asc;  // Ascending order
+- (PPSQL *(^)(NSString *))add;
+@property (nonatomic, copy, readonly) PPSQL *(^add)(NSString *);
+
+
+/**
+ * CREATE default sql is "CREATE TABLE if not exists 'table name'"
+ * The subs followed by CREATE will call back an obj typed of id<PPSQLProtocol>.
+ * Actually, the obj is typed of PPSQLCreate.
+ *
+ * PPSQL *pp = [[PPSQL alloc] init];
+ *
+ * NSString *sql = pp.CREATE(@"Person").subs(^(id<PPSQLProtocol> sub) {
+ *
+ *    sub.INTEGER(@"_id").primaryKey.autoincrement.notNull
+ *       .TEXT(@"name")
+ *       .INTEGER(@"age")
+ *       .REAL(@"height")
+ *       .BLOB(@"info");
+ * }).build;
+ *
+ * NSLog(@"%@", sql);
+ *
+ * Print Result:
+ * -> CREATE TABLE if not exists 'Person'
+ *   ('_id' 'INTEGER' primary key autoincrement NOT NULL,
+ *   'name' 'TEXT', 'age' 'INTEGER', 'height' 'REAL', 'info' 'BLOB')
+ */
+- (PPSQL *(^)(NSString *))CREATE;
+@property (nonatomic, copy, readonly) PPSQL *(^CREATE)(NSString *);
+
+/**
+ * sql = pp.UPDATE(@"Person").subs(^(id<PPSQLProtocol> sub) {
+ *     sub.column(@"age");
+ * }).terms(^(PPTerm *term) {
+ *     term.where.equal(@"_id", @(1));
+ * }).build;
+ *
+ * NSLog(@"%@", sql);
+ * Print Result:
+ * -> UPDATE Person SET age = ? WHERE _id = 1
+ */
+
+/**
+ * INSERT INTO %@
+ */
+- (PPSQL *(^)(NSString *))INSERT;
+@property (nonatomic, copy, readonly) PPSQL *(^INSERT)(NSString *);
+
+/**
+ * UPDATE %@ SET 
+ */
+- (PPSQL *(^)(NSString *))UPDATE;
+@property (nonatomic, copy, readonly) PPSQL *(^UPDATE)(NSString *);
+
+/**
+ * DELETE FROM %@
+ */
+- (PPSQL *(^)(NSString *))DELETE;
+@property (nonatomic, copy, readonly) PPSQL *(^DELETE)(NSString *);
+
+/**
+ * SELECT * FROM %@
+ */
+- (PPSQL *(^)(NSString *))SELECT;
+@property (nonatomic, copy, readonly) PPSQL *(^SELECT)(NSString *);
+- (PPSQL *)distinct;
+
+
+/**
+ * subs callback an obj type of id<PPSQLProtocol>,
+ *  which can be an instance of PPSQLCreate, PPSQLInsert or PPSQLUpdate.
+ */
+- (PPSQL *(^)(PPSQLSubBlock))subs;
+@property (nonatomic, copy, readonly) PPSQL*(^subs)(PPSQLSubBlock);
+
+/**
+ * terms callback an obj type of PPTerm.
+ */
+- (PPSQL *(^)(PPSQLTermBlock))terms;
+@property (nonatomic, copy, readonly) PPSQL *(^terms)(PPSQLTermBlock);
 @end
 
-// --------------PPWhere---------------
-@interface PPWhere : NSObject <RTSubSQLProtocol>
-@property (nonatomic, strong, readonly) NSMutableString *mStrResult;
 
-- (PPWhere *(^)(NSString *, ...))condition;
 
-- (PPWhere *(^)(NSString *, id))equal; // =
-- (PPWhere *(^)(NSString *, id))more;  // >
-- (PPWhere *(^)(NSString *, id))less;  // <
-- (PPWhere *(^)(NSString *, id))moreOrEquel; // >=
-- (PPWhere *(^)(NSString *, id))lessOrEquel; // <=
-
-- (PPWhere *)AND;
-- (PPWhere *)OR;
-@end
-
-// --------------PPSQLCreate---------------
-@interface PPSQLCreate : NSObject <RTSubSQLProtocol>
-@property (nonatomic, strong, readonly) NSMutableString *mStrResult;
-
-- (PPSQLCreate *(^)(NSString *))TEXT;
-- (PPSQLCreate *(^)(NSString *))INTEGER;
-- (PPSQLCreate *(^)(NSString *))BLOB;
-- (PPSQLCreate *(^)(NSString *))REAL;
-- (PPSQLCreate *)notNull;
-
-- (PPSQLCreate *)primaryKey;
-- (PPSQLCreate *)autoincrement;
-@end
-
-// --------------PPSQLInsert---------------
-@interface PPSQLInsert : NSObject <RTSubSQLProtocol>
-
-@property (nonatomic, strong, readonly) NSMutableString *mStrResult;
-
-- (PPSQLInsert *(^)(NSString *))column;
-@end
-
-@interface PPSQLUpdate : NSObject <RTSubSQLProtocol>
-@property (nonatomic, strong, readonly) NSMutableString *mStrResult;
-
-- (PPSQLUpdate *(^)(NSString *))column;
-@end
 
 
