@@ -215,7 +215,9 @@ Print Result:
 ## Author
 
 - [ENUUI](https://github.com/FuihuiC)
-
+## 中文参考
+- [RTDatabase(1) 存储篇](https://www.jianshu.com/p/37e7d4abd4dd)
+- [RTDatabase(2) SQL篇](https://www.jianshu.com/p/1739567ea7e4)
 ## Licenses
 
 All source code is licensed under the [MIT License](https://raw.github.com/rs/SDWebImage/master/LICENSE).
