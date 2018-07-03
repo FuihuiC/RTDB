@@ -130,124 +130,34 @@ fetchSql:@"SELECT * FROM DB order by _id" withError:&err];
 * RTSDB & RTSDBExtra  
 
 RTSDB & RTSDBExtra provide a chainable way of using RTDB & RTDBDefault.  
-When calling RTSDB instance's method, it will return a new RTSDBExtra instance. RTSDBExtra's instance methods are chainable.  
+When calling RTSDB instance's method, it will return a new RTSDBExtra instance. RTSDBExtra's instance methods are chainable. You can use point syntax to call each method. 
 
 ```
 // init a RTSDB instance.
 RTSDB *db = [[RTSDB alloc] init];
 
-// open database
 db.onDefault
 .onOpen(@"~/RTDB.sqlite3")
 .onError(^(NSError *err) {
     NSLog(@"%@", err);
 });
-
-// creat table
-db.onDefault
-.execArgs(@"CREATE TABLE if not exists 'DB' \
-('name' 'TEXT', 'data' 'BLOB', 'n' 'REAL', 'date' 'REAL', 'f' \
-'REAL', 'd' 'REAL', 'c' 'INTEGER', 'uc' 'INTEGER')", nil)
-.onDone()
-.onError(^(NSError *err) {
-    NSLog(@"%@", err);
-});
-
-// insert
-db.onDefault
-.execArgs(
-@"INSERT INTO DB (name, data, n, date, f, d, c, uc) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-@"name",
-[@"name" dataUsingEncoding:NSUTF8StringEncoding],
-@(1),
-[NSDate date],
-@(1.412),
-@(0.31231),
-@(-'e'),
-@('e'),
-nil)
-.onDone()
-.onError(^(NSError *err) {
-    NSLog(@"%@", err);
-});
-
+```
+In RTSDBExtra, an asynchronous execution scheme is provided.After the `onMain` is invoked, the operation will be executed on the main queue.After the `onQueue` is invoked, the operation will be executed on the specified queue.  
+If the default queue is set, the operation after the `onDefault` is invoked will be executed on the default queue. Otherwise, it is executed on the main queue.The queues can be switched on many times during the call process.
+> `onQueue` will not change the default queue.
+```
 // select
 db.onDefault
 .execArgs(@"SELECT * FROM DB", nil) 0))
+.onQueue(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0))
 .onEnum(^(NSDictionary *dic, int step, BOOL *stop){
+    // Called in a subqueue
     NSLog(@"%@", dic);
     NSLog(@"%d", step);
     NSLog(@"%@", [NSThread currentThread]);
 })
 .onError(^(NSError *err) {
     NSLog(@"%@", err);
-});
-
-
-/**
-* @interface DB : NSObject
-*
-* @property (nonatomic, assign) NSInteger _id; // _id is needed for primary key
-* @end
-*/
-DB *obj = [[DB alloc] init];
-// insert 
-db.onDefault
-.onInsert(obj)
-.onError(^(NSError *err) {
-    NSLog(@"%@", err);
-});  
-
-// update
-db.onDefault
-.onUpdate(obj)
-.onError(^(NSError *err) {
-    NSLog(@"%@", err);
-});
-
-// delete
-db.onDefault
-.onDelete(obj)
-.onError(^(NSError *err) {
-    NSLog(@"%@", err);
-});
-
-// select    
-db.onDefault
-.onFetchDics(@"SELECT * FROM DB order by _id", ^(NSArray <NSDictionary *>* result) {
-    for (NSDictionary *dic in result) {
-        NSLog(@"%@", dic);
-    }
-})
-.onError(^(NSError *err) {
-    NSLog(@"%@", err);
-});
-
-//
-db.onDefault
-.onFetchObjs(@"", ^(NSArray <DB *>*result) {
-    for (DB *obj in result) {
-        NSLog(@"%@", obj);
-    }
-})
-.onError(^(NSError *err) {
-    NSLog(@"%@", err);
-});
-
-db.onDefault
-.execArgs(@"SELECT * FROM DB")
-.onStep(^(RTNext *next) {
-int count = [next columnCountOfRow];
-    while ([next step]) {
-        for (int i = 0; i < count; i++) {
-            NSString *name = [next nameForColumn:i];
-            id value = [next valueForColumn:i];
-            NSLog(@"name: %@, value = %@", name, value);
-        }
-    }
-})
-.onError(^(NSError *err) {
-    NSLog(@"%@", err)
 });
 ```
 * Prepare SQL
