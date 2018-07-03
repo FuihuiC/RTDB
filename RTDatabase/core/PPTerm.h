@@ -2,7 +2,7 @@
 //  PPTerm.h
 //  RTDatabase
 //
-//  Created by hc-jim on 2018/7/3.
+//  Created by ENUUI on 2018/7/3.
 //  Copyright © 2018年 ENUUI. All rights reserved.
 //
 
@@ -42,13 +42,13 @@
 @interface PPTerm (GroupBy)
 // Group By
 - (PPTerm *(^)(NSString *))groupBy;
-@property (nonatomic, copy, readonly) PPTerm *(^groupBy)(NSString *);
+@property (nonatomic, readonly) PPTerm *(^groupBy)(NSString *);
 
 /**
  * The indefinite parameters must end with nil
  */
 - (PPTerm *(^)(NSString *, ...))groupBys;
-@property (nonatomic, copy, readonly) PPTerm *(^groupBys)(NSString *, ...);
+@property (nonatomic, readonly) PPTerm *(^groupBys)(NSString *, ...);
 // Having
 - (PPTerm *)having;
 @end
@@ -56,20 +56,20 @@
 @interface PPTerm (Limit)
 // limit
 - (PPTerm *(^)(NSUInteger))limit;
-@property (nonatomic, copy, readonly) PPTerm *(^limit)(NSUInteger);
+@property (nonatomic, readonly) PPTerm *(^limit)(NSUInteger);
 
 @end
 
 @interface PPTerm (OrderBy)
 // orderBy
 - (PPTerm *(^)(NSString *))orderBy;
-@property (nonatomic, copy, readonly) PPTerm *(^orderBy)(NSString *);
+@property (nonatomic, readonly) PPTerm *(^orderBy)(NSString *);
 
 /**
  * The indefinite parameters must end with nil
  */
 - (PPTerm *(^)(NSString *, ...))ordersBy;
-@property (nonatomic, copy, readonly) PPTerm *(^ordersBy)(NSString *, ...);
+@property (nonatomic, readonly) PPTerm *(^ordersBy)(NSString *, ...);
 
 - (PPTerm *)desc; // Descending order
 - (PPTerm *)asc;  // Ascending order
@@ -84,22 +84,22 @@
  * The indefinite parameters must end with nil
  */
 - (PPTerm *(^)(NSString *, ...))condition;
-@property (nonatomic, copy, readonly) PPTerm *(^condition)(NSString *, ...);
+@property (nonatomic, readonly) PPTerm *(^condition)(NSString *, ...);
 
 - (PPTerm *(^)(NSString *, id))equal; // =
-@property (nonatomic, copy, readonly) PPTerm *(^equal)(NSString *, id);
+@property (nonatomic, readonly) PPTerm *(^equal)(NSString *, id);
 
 - (PPTerm *(^)(NSString *, id))more;  // >
-@property (nonatomic, copy, readonly) PPTerm *(^more)(NSString *, id);
+@property (nonatomic, readonly) PPTerm *(^more)(NSString *, id);
 
 - (PPTerm *(^)(NSString *, id))less;  // <
-@property (nonatomic, copy, readonly) PPTerm *(^less)(NSString *, id);
+@property (nonatomic, readonly) PPTerm *(^less)(NSString *, id);
 
 - (PPTerm *(^)(NSString *, id))moreOrEquel; // >=
-@property (nonatomic, copy, readonly) PPTerm *(^moreOrEquel)(NSString *, id);
+@property (nonatomic, readonly) PPTerm *(^moreOrEquel)(NSString *, id);
 
 - (PPTerm *(^)(NSString *, id))lessOrEquel; // <=
-@property (nonatomic, copy, readonly) PPTerm *(^lessOrEquel)(NSString *, id);
+@property (nonatomic, readonly) PPTerm *(^lessOrEquel)(NSString *, id);
 
 - (PPTerm *)AND;
 - (PPTerm *)OR;

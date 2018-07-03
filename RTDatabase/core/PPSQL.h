@@ -2,7 +2,7 @@
 //  PPSQL.h
 //  RTDatabase
 //
-//  Created by hc-jim on 2018/7/2.
+//  Created by ENUUI on 2018/7/2.
 //  Copyright © 2018年 ENUUI. All rights reserved.
 //
 
@@ -23,7 +23,7 @@ typedef void(^PPSQLTermBlock)(PPTerm *);
  * Append a custom string.
  */
 - (PPSQL *(^)(NSString *))add;
-@property (nonatomic, copy, readonly) PPSQL *(^add)(NSString *);
+@property (nonatomic, readonly) PPSQL *(^add)(NSString *);
 
 
 /**
@@ -50,7 +50,7 @@ typedef void(^PPSQLTermBlock)(PPTerm *);
  *   'name' 'TEXT', 'age' 'INTEGER', 'height' 'REAL', 'info' 'BLOB')
  */
 - (PPSQL *(^)(NSString *))CREATE;
-@property (nonatomic, copy, readonly) PPSQL *(^CREATE)(NSString *);
+@property (nonatomic, readonly) PPSQL *(^CREATE)(NSString *);
 
 /**
  * sql = pp.UPDATE(@"Person").subs(^(id<PPSQLProtocol> sub) {
@@ -68,25 +68,25 @@ typedef void(^PPSQLTermBlock)(PPTerm *);
  * INSERT INTO %@
  */
 - (PPSQL *(^)(NSString *))INSERT;
-@property (nonatomic, copy, readonly) PPSQL *(^INSERT)(NSString *);
+@property (nonatomic, readonly) PPSQL *(^INSERT)(NSString *);
 
 /**
  * UPDATE %@ SET 
  */
 - (PPSQL *(^)(NSString *))UPDATE;
-@property (nonatomic, copy, readonly) PPSQL *(^UPDATE)(NSString *);
+@property (nonatomic, readonly) PPSQL *(^UPDATE)(NSString *);
 
 /**
  * DELETE FROM %@
  */
 - (PPSQL *(^)(NSString *))DELETE;
-@property (nonatomic, copy, readonly) PPSQL *(^DELETE)(NSString *);
+@property (nonatomic, readonly) PPSQL *(^DELETE)(NSString *);
 
 /**
  * SELECT * FROM %@
  */
 - (PPSQL *(^)(NSString *))SELECT;
-@property (nonatomic, copy, readonly) PPSQL *(^SELECT)(NSString *);
+@property (nonatomic, readonly) PPSQL *(^SELECT)(NSString *);
 - (PPSQL *)distinct;
 
 
@@ -95,13 +95,13 @@ typedef void(^PPSQLTermBlock)(PPTerm *);
  *  which can be an instance of PPSQLCreate, PPSQLInsert or PPSQLUpdate.
  */
 - (PPSQL *(^)(PPSQLSubBlock))subs;
-@property (nonatomic, copy, readonly) PPSQL*(^subs)(PPSQLSubBlock);
+@property (nonatomic, readonly) PPSQL*(^subs)(PPSQLSubBlock);
 
 /**
  * terms callback an obj type of PPTerm.
  */
 - (PPSQL *(^)(PPSQLTermBlock))terms;
-@property (nonatomic, copy, readonly) PPSQL *(^terms)(PPSQLTermBlock);
+@property (nonatomic, readonly) PPSQL *(^terms)(PPSQLTermBlock);
 @end
 
 

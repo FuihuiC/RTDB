@@ -2,7 +2,7 @@
 //  PPSubSQL.h
 //  RTDatabase
 //
-//  Created by hc-jim on 2018/7/3.
+//  Created by ENUUI on 2018/7/3.
 //  Copyright © 2018年 ENUUI. All rights reserved.
 //
 
@@ -14,16 +14,16 @@
 @property (nonatomic, strong, readonly) NSMutableString *mStrResult;
 
 - (PPSQLCreate *(^)(NSString *))TEXT;
-@property (nonatomic, copy, readonly) PPSQLCreate *(^TEXT)(NSString *);
+@property (nonatomic, readonly) PPSQLCreate *(^TEXT)(NSString *);
 
 - (PPSQLCreate *(^)(NSString *))INTEGER;
-@property (nonatomic, copy, readonly) PPSQLCreate *(^INTEGER)(NSString *);
+@property (nonatomic, readonly) PPSQLCreate *(^INTEGER)(NSString *);
 
 - (PPSQLCreate *(^)(NSString *))BLOB;
-@property (nonatomic, copy, readonly) PPSQLCreate *(^BLOB)(NSString *);
+@property (nonatomic, readonly) PPSQLCreate *(^BLOB)(NSString *);
 
 - (PPSQLCreate *(^)(NSString *))REAL;
-@property (nonatomic, copy, readonly) PPSQLCreate *(^REAL)(NSString *);
+@property (nonatomic, readonly) PPSQLCreate *(^REAL)(NSString *);
 
 - (PPSQLCreate *)notNull;
 
@@ -37,12 +37,12 @@
 @property (nonatomic, strong, readonly) NSMutableString *mStrResult;
 
 - (PPSQLInsert *(^)(NSString *))column;
-@property (nonatomic, copy, readonly) PPSQLInsert *(^column)(NSString *);
+@property (nonatomic, readonly) PPSQLInsert *(^column)(NSString *);
 @end
 
 @interface PPSQLUpdate : NSObject <PPSQLProtocol>
 @property (nonatomic, strong, readonly) NSMutableString *mStrResult;
 
 - (PPSQLUpdate *(^)(NSString *))column;
-@property (nonatomic, copy, readonly) PPSQLUpdate *(^column)(NSString *);
+@property (nonatomic, readonly) PPSQLUpdate *(^column)(NSString *);
 @end

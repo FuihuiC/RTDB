@@ -33,7 +33,10 @@ NS_SWIFT_UNAVAILABLE("")
  * If did not set a defaultQueue, calling onDefault will not change the queue.
  */
 - (RTSDBExtra *)onDefault;
+
 - (RTSDBExtra *(^)(dispatch_queue_t))onQueue;
+@property (nonatomic, readonly) RTSDBExtra *(^onQueue)(dispatch_queue_t);
+
 - (RTSDBExtra *)onMain;
 
 /** close database */
