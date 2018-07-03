@@ -85,8 +85,6 @@ typedef void(^PPSQLTermBlock)(PPTerm *);
  * SELECT
  */
 - (PPSQL *)SELECT;
-//- (PPSQL *(^)(NSString *))SELECT;
-//@property (nonatomic, readonly) PPSQL *(^SELECT)(NSString *);
 - (PPSQL *)distinct;
 
 
