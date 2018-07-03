@@ -15,7 +15,7 @@
 @implementation PPSQLSelect
 INIT_WITH_MSTRING
 
-- (id<PPSQLProtocol> (^)(NSString *))add {
+- (PPSQLSelect *(^)(NSString *))add {
     return ^(NSString *args) {
         [self.mStrResult appendFormat:@" %@", args];
         return self;
@@ -42,6 +42,10 @@ INIT_WITH_MSTRING
         [self.mStrResult appendFormat:format, col];
         return self;
     };
+}
+
+- (PPSQLSelect *)asterisk {
+    return self.add(@" *");
 }
 @end
 // ---------------------------------------------------

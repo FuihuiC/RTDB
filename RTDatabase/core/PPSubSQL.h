@@ -11,11 +11,15 @@
 
 @interface PPSQLSelect : NSObject <PPSQLProtocol>
 @property (nonatomic, strong, readonly) NSMutableString *mStrResult;
+- (PPSQLSelect *(^)(NSString *))add;
+
 - (PPSQLSelect *(^)(NSString *))from;
 @property (nonatomic, readonly) PPSQLSelect *(^from)(NSString *);
 
 - (PPSQLSelect *(^)(NSString *))column;
 @property (nonatomic, readonly) PPSQLSelect *(^column)(NSString *);
+
+- (PPSQLSelect *)asterisk;
 @end
 
 // --------------PPSQLCreate---------------
