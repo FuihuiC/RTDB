@@ -124,7 +124,9 @@
     return ^(rt_error_b_t b) {
         if (!b) return;
         if (!self.err) return;
-        b(self.err);
+        self.onWorkQueue(^{
+           b(self.err);
+        });
     };
 }
 
