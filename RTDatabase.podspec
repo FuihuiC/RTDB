@@ -18,13 +18,13 @@ Pod::Spec.new do |s|
   s.source_files = 'RTDatabase/RTDatabase.h'
 
   s.subspec 'RTDB' do |ss|
-  	ss.ios.deployment_target = '8.2'
+    ss.ios.deployment_target = '8.2'
     ss.source_files        = 'RTDatabase/core/RT*.{h,m}'
     ss.public_header_files = 'RTDatabase/core/RT*.{h}'
   end 
 
   s.subspec 'PPSQL' do |ss| 
-   	ss.source_files         = 'RTDatabase/core/PP*.{h,m}'
-   	ss.public_header_files  = 'RTDatabase/core/PP*.{h}'
+    ss.source_files         = 'RTDatabase/core/PP*.{h,m}'
+    ss.public_header_files  = 'RTDatabase/core/PP*.{h}'
   end
 end
