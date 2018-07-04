@@ -18,6 +18,16 @@ platform :ios, '8.2'
 
 pod 'RTDatabase'
 ```
+
+if you just wanna data storage
+```
+pod 'RTDatabase/RTDB'
+```
+
+if you just wanna build sql tool
+```
+pod `RTDatabase/PPSQL`
+```
 #### Installation by cloning the repository
 
 ## How To Use
