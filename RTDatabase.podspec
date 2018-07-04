@@ -1,7 +1,7 @@
 Pod::Spec.new do |s|
 
   s.name         = "RTDatabase"
-  s.version      = "0.0.3"
+  s.version      = "0.1.0"
   s.summary      = "A Library for iOS to use for sqlite"
   s.homepage     = "https://github.com/FuihuiC"
   s.author             = { "ENUUI" => "ENUUI_C@163.com" }
@@ -15,14 +15,16 @@ Pod::Spec.new do |s|
   s.license = "MIT"
 
   s.public_header_files = 'RTDatabase/RTDatabase.h'
+  s.source_files = 'RTDatabase/RTDatabase.h'
 
   s.subspec 'RTDB' do |ss|
+  	ss.ios.deployment_target = '8.2'
     ss.source_files        = 'RTDatabase/core/RT*.{h,m}'
     ss.public_header_files = 'RTDatabase/core/RT*.{h}'
   end 
 
   s.subspec 'PPSQL' do |ss| 
-   	ss.source_files         = RTDatabase/core/PP*.{h,m}'
-   	ss.public_header_files  = RTDatabase/core/PP*.{h}'
+   	ss.source_files         = 'RTDatabase/core/PP*.{h,m}'
+   	ss.public_header_files  = 'RTDatabase/core/PP*.{h}'
   end
 end
