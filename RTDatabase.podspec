@@ -4,7 +4,7 @@ Pod::Spec.new do |s|
   s.version      = "0.1.0"
   s.summary      = "A Library for iOS to use for sqlite"
   s.homepage     = "https://github.com/FuihuiC"
-  s.author             = { "ENUUI" => "ENUUI_C@163.com" }
+  s.author       = { "ENUUI" => "ENUUI_C@163.com" }
 
   s.source       = { :git => "https://github.com/FuihuiC/RTDB.git", :tag => "#{s.version}" }
 
