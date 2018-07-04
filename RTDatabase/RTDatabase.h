@@ -18,8 +18,9 @@ FOUNDATION_EXPORT const unsigned char RTDatabaseVersionString[];
 
 #if OS_OBJECT_USE_OBJC
 #import <RTDatabase/RTSDB.h>
+#import <RTDatabase/PPSQL.h>
+
 #else
 #import <RTDatabase/RTDB.h>
 #endif
 
-#import <RTDatabase/PPSQL.h>

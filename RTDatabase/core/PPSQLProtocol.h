@@ -41,6 +41,7 @@ return self; \
 
 // select only
 - (id<PPSQLProtocol> (^)(NSString *))from;
+- (id<PPSQLProtocol>)asterisk;
 
 // select update insert
 - (id<PPSQLProtocol> (^)(NSString *))column;

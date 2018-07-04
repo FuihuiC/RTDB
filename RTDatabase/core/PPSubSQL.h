@@ -18,7 +18,7 @@
 
 - (PPSQLSelect *(^)(NSString *))column;
 @property (nonatomic, readonly) PPSQLSelect *(^column)(NSString *);
-
+// *
 - (PPSQLSelect *)asterisk;
 @end
 
