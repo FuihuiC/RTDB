@@ -1,13 +1,14 @@
 Pod::Spec.new do |s|
 
   s.name         = "RTDatabase"
-  s.version      = "0.1.0"
+  s.version      = "0.1.1"
   s.summary      = "A Library for iOS to use for sqlite"
   s.homepage     = "https://github.com/FuihuiC"
   s.author       = { "ENUUI" => "ENUUI_C@163.com" }
 
-  s.source       = { :git => "https://github.com/FuihuiC/RTDB.git", :tag => "#{s.version}" }
+ # s.source       = { :git => "https://github.com/FuihuiC/RTDB.git", :tag => "#{s.version}" }
 
+  s.source       = { :git => "/Users/hc-jim/Desktop/Codes/OptiDB/RTDB", :tag => "#{s.version}" }
   s.requires_arc = true
 
   s.ios.deployment_target = '8.2'

@@ -1,0 +1,5 @@
+framework module RTDatabase {
+    umbrella header "RTDatabase.h"
+    export *
+    module * { export * }
+}
