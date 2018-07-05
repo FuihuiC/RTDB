@@ -6,7 +6,7 @@
 //  Copyright © 2018年 ENUUI. All rights reserved.
 //
 
-#import <UIKit/UIKit.h>
+#import <Foundation/Foundation.h>
 
 //! Project version number for RTDatabase.
 FOUNDATION_EXPORT double RTDatabaseVersionNumber;

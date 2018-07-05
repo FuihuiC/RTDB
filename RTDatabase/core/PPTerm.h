@@ -22,6 +22,7 @@
  */
 
 // --------------PPTerm---------------
+NS_SWIFT_UNAVAILABLE("")
 @interface PPTerm : NSObject <PPSQLProtocol>
 @property (nonatomic, strong, readonly) NSMutableString *mStrResult;
 - (PPTerm *(^)(NSString *))add;

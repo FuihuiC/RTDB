@@ -20,7 +20,7 @@ _mStrResult = [NSMutableString string]; \
 } \
 return self; \
 }
-
+NS_SWIFT_UNAVAILABLE("")
 @protocol PPSQLProtocol
 
 @required

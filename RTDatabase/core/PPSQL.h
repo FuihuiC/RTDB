@@ -14,6 +14,7 @@ typedef void(^PPSQLSubBlock)(id<PPSQLProtocol>);
 typedef void(^PPSQLTermBlock)(PPTerm *);
 
 // --------------PPSQL---------------
+NS_SWIFT_UNAVAILABLE("")
 @interface PPSQL : NSObject 
 @property (nonatomic, strong, readonly) NSMutableString *mStrResult;
 

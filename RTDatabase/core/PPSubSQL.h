@@ -9,6 +9,7 @@
 #import <Foundation/Foundation.h>
 #import "PPSQLProtocol.h"
 
+NS_SWIFT_UNAVAILABLE("")
 @interface PPSQLSelect : NSObject <PPSQLProtocol>
 @property (nonatomic, strong, readonly) NSMutableString *mStrResult;
 - (PPSQLSelect *(^)(NSString *))add;
@@ -23,6 +24,7 @@
 @end
 
 // --------------PPSQLCreate---------------
+NS_SWIFT_UNAVAILABLE("")
 @interface PPSQLCreate : NSObject <PPSQLProtocol>
 @property (nonatomic, strong, readonly) NSMutableString *mStrResult;
 
@@ -45,6 +47,7 @@
 @end
 
 // --------------PPSQLInsert---------------
+NS_SWIFT_UNAVAILABLE("")
 @interface PPSQLInsert : NSObject <PPSQLProtocol>
 
 @property (nonatomic, strong, readonly) NSMutableString *mStrResult;
@@ -54,6 +57,7 @@
 @end
 
 // --------------PPSQLUpdate---------------
+NS_SWIFT_UNAVAILABLE("")
 @interface PPSQLUpdate : NSObject <PPSQLProtocol>
 @property (nonatomic, strong, readonly) NSMutableString *mStrResult;
 
