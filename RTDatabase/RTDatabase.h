@@ -16,11 +16,7 @@ FOUNDATION_EXPORT const unsigned char RTDatabaseVersionString[];
 
 // In this header, you should import all the public headers of your framework using statements like #import <RTDatabase/PublicHeader.h>
 
-#if OS_OBJECT_USE_OBJC
 #import <RTDatabase/RTSDB.h>
 #import <RTDatabase/PPSQL.h>
 
-#else
-#import <RTDatabase/RTDB.h>
-#endif
 

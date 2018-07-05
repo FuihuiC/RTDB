@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 50;
+	objectVersion = 48;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -102,18 +102,18 @@
 		655704F520A82103004238C0 /* core */ = {
 			isa = PBXGroup;
 			children = (
-				655704F620A8210B004238C0 /* RTPreset.h */,
-				655704FF20A8210B004238C0 /* RTTools.m */,
 				655704FC20A8210B004238C0 /* RTDB.h */,
 				655704F920A8210B004238C0 /* RTDB.m */,
 				655704FB20A8210B004238C0 /* RTDBDefault.h */,
 				655704FA20A8210B004238C0 /* RTDBDefault.m */,
+				6557050320A8210B004238C0 /* RTDBFunc.h */,
+				6557050120A8210B004238C0 /* RTDBFunc.m */,
+				655704F620A8210B004238C0 /* RTPreset.h */,
+				655704FF20A8210B004238C0 /* RTTools.m */,
 				655704F820A8210B004238C0 /* RTNext.h */,
 				655704FD20A8210B004238C0 /* RTNext.m */,
 				6557050220A8210B004238C0 /* RTInfo.h */,
 				6557050020A8210B004238C0 /* RTInfo.m */,
-				6557050320A8210B004238C0 /* RTDBFunc.h */,
-				6557050120A8210B004238C0 /* RTDBFunc.m */,
 				655704FE20A8210B004238C0 /* RTSDB.h */,
 				655704F720A8210B004238C0 /* RTSDB.m */,
 				27256BAD20B56E5600E37D3D /* RTSDBExtra.h */,
@@ -184,12 +184,14 @@
 				TargetAttributes = {
 					655704E920A82039004238C0 = {
 						CreatedOnToolsVersion = 9.3;
+						DevelopmentTeam = ND64TP974D;
 						LastSwiftMigration = 0930;
+						ProvisioningStyle = Automatic;
 					};
 				};
 			};
 			buildConfigurationList = 655704E420A82039004238C0 /* Build configuration list for PBXProject "RTDatabase" */;
-			compatibilityVersion = "Xcode 9.3";
+			compatibilityVersion = "Xcode 8.0";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -367,11 +369,7 @@
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
 				INFOPLIST_FILE = RTDatabase/Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-					"@loader_path/Frameworks",
-				);
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = com.ENUUI.RTDatabase;
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				SKIP_INSTALL = YES;
@@ -396,11 +394,7 @@
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
 				INFOPLIST_FILE = RTDatabase/Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-					"@loader_path/Frameworks",
-				);
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = com.ENUUI.RTDatabase;
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				SKIP_INSTALL = YES;
