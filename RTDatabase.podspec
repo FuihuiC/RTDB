@@ -8,11 +8,11 @@ Pod::Spec.new do |s|
 
  # s.source       = { :git => "https://github.com/FuihuiC/RTDB.git", :tag => "#{s.version}" }
 
-  s.source       = { :git => "/Users/hc-jim/Desktop/Codes/OptiDB/RTDB", :tag => "#{s.version}" }
+  s.source       = { :git => "/Users/hc-jim/Desktop/Codes/OptiDB/RTDB/.git", :tag => "#{s.version}" }
   s.requires_arc = true
 
   s.ios.deployment_target = '8.2'
-  s.osx.deployment_target = '10.10'
+  #s.osx.deployment_target = '10.10'
   s.tvos.deployment_target = '9.0'
   
   s.license = "MIT"
