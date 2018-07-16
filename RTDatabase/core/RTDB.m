@@ -8,10 +8,17 @@
 
 #import "RTDB.h"
 
+@interface RTDB (){
+    void *_db;
+}
+@end
+
 @implementation RTDB
+
 - (void *)sqlite3_db {
     return self->_db;
 }
+
 - (BOOL)close {
     BOOL suc = rt_sqlite3_close(_db);
     if (suc) {
@@ -153,6 +160,11 @@
         return nil;
     }
     
+    BOOL isInsert = [self isInserSql:sql];
+    if (isInsert && params && params.count > 0) {
+        sql = [self formatSql:sql];
+    }
+    
     void *stmt;
     if (!rt_sqlite3_prepare_v2(_db, [sql UTF8String], &stmt, err)) {
         return nil;
@@ -171,13 +183,9 @@
                 [mArrArgs addObject:v];
             }
         }
-    } else if (params && params.count > 0) { // NSDictionary
-        sql = [self formatSqlForDictArgu:sql];
     }
     
-    
     // bind data to sqilte
-    
     int boundCount = 0;
     if (mArrArgs && mArrArgs.count > 0) {
         for (int i = 0; i < mArrArgs.count; i++) {
@@ -195,8 +203,6 @@
         
         NSArray *arrKeys = params.allKeys;
 
-        BOOL isInsert = [self isInserSql:sql];
-        
         for (int i = 0; i < arrKeys.count; i++) {
             NSString *dickey = arrKeys[i];
             id value = params[dickey];
@@ -232,36 +238,36 @@
 }
 
 - (BOOL)isInserSql:(NSString *)sql {
-    return ([[sql stringByReplacingOccurrencesOfString:@" " withString:@""] hasPrefix:@"INSERT"] ||
-            [[sql stringByReplacingOccurrencesOfString:@" " withString:@""] hasPrefix:@"insert"]);
+    NSString *lowerSql = [sql lowercaseString];
+    return [lowerSql containsString:@"insert"];
 }
 
-// format sql for bind. change (?, ?...) to (:name1, :name2, ...)
-- (NSString *)formatSqlForDictArgu:(NSString *)sql {
-    if (![self isInserSql:sql]) {
-        return sql;
-    }
-    
+// format sql: INSERT INTO *** (name1, name2, ...) VALUES (:name1, :name2, ...)
+- (NSString *)formatSql:(NSString *)sql {
+
     BOOL sqlT = [sql containsString:@":"];
     NSString *sql_format = sql;
     if (!sqlT) {
-        NSRange r1 = [sql rangeOfString:@"("];
-        NSRange r2 = [sql rangeOfString:@")"];
-        if (r1.length == 0 || r2.length == 0) { return sql; }
+        NSArray <NSString *>*subStrings = [sql componentsSeparatedByString:@"("];
+        if (subStrings.count < 2) {
+            return sql_format;
+        }
         
-        NSString *strColumns = [sql substringWithRange:NSMakeRange(r1.location + 1, r2.location - r1.location - 1)];
+        NSString *sqlPrefix = subStrings.firstObject;
+        NSString *strColumns = [subStrings[1] componentsSeparatedByString:@")"].firstObject;
+        if (!strColumns || strColumns.length == 0) {
+            return sql_format;
+        }
+        
+        sqlPrefix = [sqlPrefix stringByAppendingFormat:@"(%@) VALUES (:", strColumns];
+        strColumns = [strColumns stringByReplacingOccurrencesOfString:@" " withString:@""];
         
         NSArray *arrColumns = [strColumns componentsSeparatedByString:@","];
         
-        for (int i = 0; i < arrColumns.count; i++) {
-            NSString *column = arrColumns[i];
-            column = [column stringByReplacingOccurrencesOfString:@" " withString:@""];
-            
-            NSRange rangeAim = [sql_format rangeOfString:@"?"];
-            if (rangeAim.length > 0) {
-                sql_format = [sql_format stringByReplacingCharactersInRange:rangeAim withString:[@":" stringByAppendingString:column]];
-            }
-        }
+        NSString *sqlValues = [arrColumns componentsJoinedByString:@", :"];
+        
+        sql_format = [sqlPrefix stringByAppendingFormat:@"%@)", sqlValues];
+
         DELog(@"sql_format = %@", sql_format);
     }
     return sql_format;

@@ -32,7 +32,7 @@ NS_SWIFT_UNAVAILABLE("")
 @interface PPTerm (Match)
 
 - (PPTerm *)like;
-- (PPTerm *)glob;
+- (PPTerm *)GLOB;
 @end
 
 @interface PPTerm (Where)

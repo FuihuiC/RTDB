@@ -7,37 +7,7 @@
 //
 
 #import <Foundation/Foundation.h>
-#import "RTPreset.h"
-
-
-/** flags for rt_sqlite3_open third arg. */
-/** Set up database connection running in multi thread mode (without specifying single thread mode) */
-#define RT_SQLITE_OPEN_NOMUTEX          0x00008000
-/** Set the database connection to run in serial mode */
-#define RT_SQLITE_OPEN_FULLMUTEX        0x00010000
-
-#define RT_SQLITE_OPEN_SHAREDCACHE      0x00020000
-#define RT_SQLITE_OPEN_PRIVATECACHE     0x00040000
-
-#define RT_SQLITE_OPEN_READONLY         0x00000001
-#define RT_SQLITE_OPEN_READWRITE        0x00000002
-#define RT_SQLITE_OPEN_CREATE           0x00000004
-/**
- * If URI filename interpretation is enabled,
- * and the filename argument begins with "file:"
- * then the filename is interpreted as a URI.
- */
-#define RT_SQLITE_OPEN_URI              0x00000040
-#define RT_SQLITE_OPEN_MEMORY           0x00000080
-
-#define RT_SQLITE_OPEN_FILEPROTECTION_COMPLETE                             0x00100000
-#define RT_SQLITE_OPEN_FILEPROTECTION_COMPLETEUNLESSOPEN                   0x00200000
-#define RT_SQLITE_OPEN_FILEPROTECTION_COMPLETEUNTILFIRSTUSERAUTHENTICATION 0x00300000
-#define RT_SQLITE_OPEN_FILEPROTECTION_NONE                                 0x00400000
-#define RT_SQLITE_OPEN_FILEPROTECTION_MASK                                 0x00700000
-
-
-
+#import "RTTools.h"
 
 typedef void(^rt_column_enum_block_t)(const char *cname, id value);
 

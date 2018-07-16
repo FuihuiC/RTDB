@@ -17,8 +17,11 @@ typedef enum : NSUInteger {
     PPSQLOperateDelete,
 } PPSQLOperateType;
 
+// -------------------------------------------
+#pragma mark PPSQL
 @interface PPSQL ()
 @property (nonatomic, assign) PPSQLOperateType opType;
+
 @end
 
 @implementation PPSQL
@@ -93,42 +96,14 @@ INIT_WITH_MSTRING
 }
 
 // ---------------------------------------
-- (PPSQL *(^)(PPSQLSubBlock))subs {
-    id<PPSQLProtocol> subOP = [self sub];
-    return ^(PPSQLSubBlock block) {
-        NSAssert(block != nil, @"Sub block can not be empty!");
-        block(subOP);
-        [self.mStrResult appendString:[subOP build]];
+
+- (PPSQL *(^)(PPSQLColumnBlock))columns {
+    return ^(PPSQLColumnBlock block) {
+        PPColumns *columns = [[PPColumns alloc] initWithType:self.opType];
+        block(columns);
+        [self.mStrResult appendString:[columns build]];
         return self;
     };
-}
-
-- (id<PPSQLProtocol>)sub {
-    id<PPSQLProtocol> subOP = nil;
-    switch (self.opType) {
-        case PPSQLOperateCreate: {
-            subOP = [[PPSQLCreate alloc] init];
-        }
-            break;
-        case PPSQLOperateSelect: {
-            subOP = [[PPSQLSelect alloc] init];
-        }
-            break;
-        case PPSQLOperateInsert: {
-            subOP = [[PPSQLInsert alloc] init];
-        }
-            break;
-        case PPSQLOperateUpdate: {
-            subOP = [[PPSQLUpdate alloc] init];
-        }
-            break;
-        case PPSQLOperateDelete: {}
-            break;
-        default:
-            break;
-    }
-    
-    return subOP;
 }
 
 - (PPSQL *(^)(PPSQLTermBlock))terms {

@@ -8,11 +8,11 @@
 
 #import <Foundation/Foundation.h>
 #import "PPTerm.h"
-#import "PPSubSQL.h"
+#import "PPColumns.h"
 
 typedef void(^PPSQLSubBlock)(id<PPSQLProtocol>);
 typedef void(^PPSQLTermBlock)(PPTerm *);
-
+typedef void(^PPSQLColumnBlock)(PPColumns *);
 // --------------PPSQL---------------
 NS_SWIFT_UNAVAILABLE("")
 @interface PPSQL : NSObject 
@@ -33,9 +33,9 @@ NS_SWIFT_UNAVAILABLE("")
  *
  * PPSQL *pp = [[PPSQL alloc] init];
  *
- * NSString *sql = pp.CREATE(@"Person").subs(^(id<PPSQLProtocol> sub) {
+ * NSString *sql = pp.CREATE(@"Person").columns(^(PPColumns *columns) {
  *
- *    sub.INTEGER(@"_id").primaryKey.autoincrement.notNull
+ *    columns.INTEGER(@"_id").primaryKey.autoincrement.notNull
  *       .TEXT(@"name")
  *       .INTEGER(@"age")
  *       .REAL(@"height")
@@ -66,12 +66,36 @@ NS_SWIFT_UNAVAILABLE("")
 
 /**
  * INSERT INTO %@
+ * sql = pp.INSERT(@"Person").columns(^(PPColumns *columns) {
+ *     columns
+ *      .column(@{@"nameDict": @"TEXT", @"ageDict": @"INTEGER", @"genderDict": @"TEXT"})
+ *      .column(@[@"nameArr", @"ageArr", @"genderArr"])
+ *      .column(@"name").column(@"age").column(@"gender");
+ * }).build;
+ *
+ * NSLog(@"%@", sql);
+ * Print Result:
+ * -> INSERT INTO Person(ageDict, nameDict, genderDict, nameArr, ageArr, genderArr, name, age, gender) VALUES (:ageDict, :nameDict, :genderDict, :nameArr, :ageArr, :genderArr, :name, :age, :gender)
  */
 - (PPSQL *(^)(NSString *))INSERT;
 @property (nonatomic, readonly) PPSQL *(^INSERT)(NSString *);
 
 /**
- * UPDATE %@ SET 
+ * UPDATE %@ SET
+ * sql = pp.UPDATE(@"Person").columns(^(PPColumns *columns) {
+ *     columns
+ *      .column(@{@"nameDict": @"TEXT", @"ageDict": @"INTEGER", @"genderDict": @"TEXT"})
+ *      .column(@[@"nameArr", @"ageArr", @"genderArr"])
+ *      .column(@"name").column(@"age").column(@"gender");
+ * })
+ * .terms(^(PPTerm *term){
+ *     term.where.moreOrEquel(@"age", @(12));
+ * })
+ * .build;
+ *
+ * NSLog(@"%@", sql);
+ * Print Result:
+ * -> UPDATE Person SET ageDict = ?, nameDict = ?, genderDict = ?, nameArr = ?, ageArr = ?, genderArr = ?, name = ?, age = ?, gender = ? WHERE age >= 12
  */
 - (PPSQL *(^)(NSString *))UPDATE;
 @property (nonatomic, readonly) PPSQL *(^UPDATE)(NSString *);
@@ -88,13 +112,8 @@ NS_SWIFT_UNAVAILABLE("")
 - (PPSQL *)SELECT;
 - (PPSQL *)distinct;
 
-
-/**
- * subs callback an obj type of id<PPSQLProtocol>,
- *  which can be an instance of PPSQLCreate, PPSQLInsert or PPSQLUpdate.
- */
-- (PPSQL *(^)(PPSQLSubBlock))subs;
-@property (nonatomic, readonly) PPSQL*(^subs)(PPSQLSubBlock);
+- (PPSQL *(^)(PPSQLColumnBlock))columns;
+@property (nonatomic, readonly) PPSQL *(^columns)(PPSQLColumnBlock);
 
 /**
  * terms callback an obj type of PPTerm.

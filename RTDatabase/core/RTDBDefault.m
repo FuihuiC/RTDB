@@ -70,7 +70,7 @@ typedef enum : NSUInteger {
         return NO;
     }
     
-    return rt_sqlite3_exec(self->_db, [info creatSql], err);
+    return rt_sqlite3_exec([self sqlite3_db], [info creatSql], err);
 }
 
 // insert
@@ -142,7 +142,7 @@ typedef enum : NSUInteger {
     // get max _id before insert
     NSInteger _id = -1;
     if (op == op_insert) {
-        _id = rt_get_primary_id(self->_db, [info maxidSql], err);
+        _id = rt_get_primary_id([self sqlite3_db], [info maxidSql], err);
         if (_id != -1) {
             _id++;
         } else {
@@ -170,7 +170,7 @@ typedef enum : NSUInteger {
     }
     
     void *stmt;
-    if (!rt_sqlite3_prepare_v2(self->_db, sql, &stmt, err)) {
+    if (!rt_sqlite3_prepare_v2([self sqlite3_db], sql, &stmt, err)) {
         return NO;
     }
     
@@ -290,7 +290,7 @@ typedef enum : NSUInteger {
     }
     
     __block void *stmt;
-    if (!rt_sqlite3_prepare_v2(self->_db, [sql UTF8String], &stmt, err)) {
+    if (!rt_sqlite3_prepare_v2([self sqlite3_db], [sql UTF8String], &stmt, err)) {
         return NO;
     }
     

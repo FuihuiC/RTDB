@@ -32,7 +32,7 @@ INIT_WITH_MSTRING
     return self;
 }
 
-- (PPTerm *)glob {
+- (PPTerm *)GLOB {
     [self.mStrResult appendString:@" GLOB"];
     return self;
 }

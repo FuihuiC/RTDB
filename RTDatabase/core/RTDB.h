@@ -13,10 +13,7 @@
  * This class is used to manage SQLite.
  * This class encapsulates the basic operations of SQLite.
  */
-@interface RTDB : NSObject  {
-    @public
-    void *_db;
-}
+@interface RTDB : NSObject
 - (void *)sqlite3_db;
 #pragma mark -
 /**
