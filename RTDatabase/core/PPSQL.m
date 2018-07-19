@@ -26,7 +26,12 @@ typedef enum : NSUInteger {
 
 @implementation PPSQL
 
-INIT_WITH_MSTRING
+- (instancetype)init {
+    if (self = [super init]) {
+        _mStrResult = [NSMutableString string];
+    }
+    return self;
+}
 
 - (PPSQL *(^)(NSString *))add {
     return ^(NSString *args) {

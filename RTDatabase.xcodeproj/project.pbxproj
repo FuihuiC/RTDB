@@ -22,7 +22,6 @@
 		274FBE4F20EA0B1000CA9AF9 /* PPSQL.m in Sources */ = {isa = PBXBuildFile; fileRef = 274FBE4D20EA0B1000CA9AF9 /* PPSQL.m */; };
 		274FBE5220EB219A00CA9AF9 /* PPTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = 274FBE5020EB219A00CA9AF9 /* PPTerm.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		274FBE5320EB219A00CA9AF9 /* PPTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = 274FBE5120EB219A00CA9AF9 /* PPTerm.m */; };
-		274FBE5520EB220300CA9AF9 /* PPSQLProtocol.h in Headers */ = {isa = PBXBuildFile; fileRef = 274FBE5420EB220300CA9AF9 /* PPSQLProtocol.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		277CFF7220EDF5BB00E66CDF /* RTDB.h in Headers */ = {isa = PBXBuildFile; fileRef = 655704FC20A8210B004238C0 /* RTDB.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		277CFF7320EDF5BB00E66CDF /* RTDBDefault.h in Headers */ = {isa = PBXBuildFile; fileRef = 655704FB20A8210B004238C0 /* RTDBDefault.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		277CFF7420EDF5BB00E66CDF /* RTDBFunc.h in Headers */ = {isa = PBXBuildFile; fileRef = 6557050320A8210B004238C0 /* RTDBFunc.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -31,7 +30,6 @@
 		277CFF7720EDF5BB00E66CDF /* RTInfo.h in Headers */ = {isa = PBXBuildFile; fileRef = 6557050220A8210B004238C0 /* RTInfo.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		277CFF7820EDF5BB00E66CDF /* RTSDB.h in Headers */ = {isa = PBXBuildFile; fileRef = 655704FE20A8210B004238C0 /* RTSDB.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		277CFF7920EDF5BB00E66CDF /* RTSDBExtra.h in Headers */ = {isa = PBXBuildFile; fileRef = 27256BAD20B56E5600E37D3D /* RTSDBExtra.h */; settings = {ATTRIBUTES = (Public, ); }; };
-		277CFF7A20EDF5BB00E66CDF /* PPSQLProtocol.h in Headers */ = {isa = PBXBuildFile; fileRef = 274FBE5420EB220300CA9AF9 /* PPSQLProtocol.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		277CFF7B20EDF5BB00E66CDF /* PPSQL.h in Headers */ = {isa = PBXBuildFile; fileRef = 274FBE4C20EA0B1000CA9AF9 /* PPSQL.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		277CFF7C20EDF5BB00E66CDF /* PPTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = 274FBE5020EB219A00CA9AF9 /* PPTerm.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		277CFF7E20EDF5DC00E66CDF /* RTDB.m in Sources */ = {isa = PBXBuildFile; fileRef = 655704F920A8210B004238C0 /* RTDB.m */; };
@@ -63,7 +61,6 @@
 		277CFFC120EE0A2D00E66CDF /* RTInfo.h in Headers */ = {isa = PBXBuildFile; fileRef = 6557050220A8210B004238C0 /* RTInfo.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		277CFFC220EE0A2D00E66CDF /* RTSDB.h in Headers */ = {isa = PBXBuildFile; fileRef = 655704FE20A8210B004238C0 /* RTSDB.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		277CFFC320EE0A2D00E66CDF /* RTSDBExtra.h in Headers */ = {isa = PBXBuildFile; fileRef = 27256BAD20B56E5600E37D3D /* RTSDBExtra.h */; settings = {ATTRIBUTES = (Public, ); }; };
-		277CFFC420EE0A2D00E66CDF /* PPSQLProtocol.h in Headers */ = {isa = PBXBuildFile; fileRef = 274FBE5420EB220300CA9AF9 /* PPSQLProtocol.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		277CFFC520EE0A2D00E66CDF /* PPSQL.h in Headers */ = {isa = PBXBuildFile; fileRef = 274FBE4C20EA0B1000CA9AF9 /* PPSQL.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		277CFFC620EE0A2D00E66CDF /* PPTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = 274FBE5020EB219A00CA9AF9 /* PPTerm.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		277CFFC820EE0A2D00E66CDF /* RTDatabase.h in Headers */ = {isa = PBXBuildFile; fileRef = 655704ED20A82039004238C0 /* RTDatabase.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -94,7 +91,6 @@
 		274FBE4D20EA0B1000CA9AF9 /* PPSQL.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = PPSQL.m; sourceTree = "<group>"; };
 		274FBE5020EB219A00CA9AF9 /* PPTerm.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = PPTerm.h; sourceTree = "<group>"; };
 		274FBE5120EB219A00CA9AF9 /* PPTerm.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = PPTerm.m; sourceTree = "<group>"; };
-		274FBE5420EB220300CA9AF9 /* PPSQLProtocol.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = PPSQLProtocol.h; sourceTree = "<group>"; };
 		277CFF6A20EDF5A000E66CDF /* RTDatabase.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = RTDatabase.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		277CFFA920EDFE7E00E66CDF /* RTDatabase.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = RTDatabase.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		655704EA20A82039004238C0 /* RTDatabase.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = RTDatabase.framework; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -189,7 +185,6 @@
 				655704F720A8210B004238C0 /* RTSDB.m */,
 				27256BAD20B56E5600E37D3D /* RTSDBExtra.h */,
 				27256BAE20B56E5600E37D3D /* RTSDBExtra.m */,
-				274FBE5420EB220300CA9AF9 /* PPSQLProtocol.h */,
 				274FBE4C20EA0B1000CA9AF9 /* PPSQL.h */,
 				274FBE4D20EA0B1000CA9AF9 /* PPSQL.m */,
 				274FBE5020EB219A00CA9AF9 /* PPTerm.h */,
@@ -215,7 +210,6 @@
 				277CFF7720EDF5BB00E66CDF /* RTInfo.h in Headers */,
 				277CFF7820EDF5BB00E66CDF /* RTSDB.h in Headers */,
 				277CFF7920EDF5BB00E66CDF /* RTSDBExtra.h in Headers */,
-				277CFF7A20EDF5BB00E66CDF /* PPSQLProtocol.h in Headers */,
 				277CFF7B20EDF5BB00E66CDF /* PPSQL.h in Headers */,
 				2737529E20FC9AC2007CCB3D /* PPColumns.h in Headers */,
 				277CFF7C20EDF5BB00E66CDF /* PPTerm.h in Headers */,
@@ -236,7 +230,6 @@
 				277CFFC120EE0A2D00E66CDF /* RTInfo.h in Headers */,
 				277CFFC220EE0A2D00E66CDF /* RTSDB.h in Headers */,
 				277CFFC320EE0A2D00E66CDF /* RTSDBExtra.h in Headers */,
-				277CFFC420EE0A2D00E66CDF /* PPSQLProtocol.h in Headers */,
 				277CFFC520EE0A2D00E66CDF /* PPSQL.h in Headers */,
 				277CFFC620EE0A2D00E66CDF /* PPTerm.h in Headers */,
 				273752A020FC9AD1007CCB3D /* PPColumns.h in Headers */,
@@ -258,7 +251,6 @@
 				6557050C20A8210B004238C0 /* RTSDB.h in Headers */,
 				274FBE4E20EA0B1000CA9AF9 /* PPSQL.h in Headers */,
 				274FBE5220EB219A00CA9AF9 /* PPTerm.h in Headers */,
-				274FBE5520EB220300CA9AF9 /* PPSQLProtocol.h in Headers */,
 				6557050420A8210B004238C0 /* RTPreset.h in Headers */,
 				273752A320FC9F08007CCB3D /* RTTools.h in Headers */,
 				2737529C20FC9A45007CCB3D /* PPColumns.h in Headers */,

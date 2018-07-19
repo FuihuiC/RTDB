@@ -7,7 +7,6 @@
 //
 
 #import <Foundation/Foundation.h>
-#import "PPSQLProtocol.h"
 
 
 /**
@@ -23,9 +22,10 @@
 
 // --------------PPTerm---------------
 NS_SWIFT_UNAVAILABLE("")
-@interface PPTerm : NSObject <PPSQLProtocol>
+@interface PPTerm : NSObject
 @property (nonatomic, strong, readonly) NSMutableString *mStrResult;
 - (PPTerm *(^)(NSString *))add;
+- (NSString *)build;
 // Glob
 @end
 

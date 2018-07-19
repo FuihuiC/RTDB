@@ -27,6 +27,9 @@
 @property (nonatomic, strong) NSError *err;
 
 @property (nonatomic, assign) BOOL rollback; // Transaction rollback.
+
+
+@property (nonatomic, strong) NSArray *arrResult; // last time select result array.
 @end
 
 @implementation RTSDBExtra
@@ -53,12 +56,13 @@
         
         if (!block) return self;
         
-        dispatch_semaphore_t sem = dispatch_semaphore_create(0);
+        dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
         [self runOnWorkQueue:^{
             block();
-            dispatch_semaphore_signal(sem);
+            dispatch_semaphore_signal(semaphore);
         }];
-        dispatch_semaphore_wait(sem, dispatch_time(DISPATCH_TIME_NOW, DISPATCH_TIME_FOREVER));
+        dispatch_semaphore_wait(semaphore, DISPATCH_TIME_FOREVER);
+        
         return self;
     };
 }
@@ -155,10 +159,7 @@
 - (RTSDBExtra *(^)(rt_next_block_t))onStep {
     return ^(rt_next_block_t b) {
         if (!b) {
-            NSError *error;
-            rt_error(@"RTSync onStep(): arg block can not be NULL", 109, &error);
-            self.err = error;
-            return self;
+            return [self extraError:@"RTSDBExtra onStep(): arg block can not be NULL" withCode:109];
         } else {
             if (!self.next) {
                 return self;
@@ -173,10 +174,7 @@
 - (RTSDBExtra *(^)(rt_step_block_t))onEnum {
     return ^(rt_step_block_t b) {
         if (!b) {
-            NSError *error;
-            rt_error(@"RTSync onEnum(): arg block can not be NULL", 109, &error);
-            self.err = error;
-            return self;
+            return [self extraError:@"RTSync onEnum(): arg block can not be NULL" withCode:109];
         } else {
             return self.onWorkQueue(^(){
                 if (self.next) self.lockOnEnum(b);
@@ -354,23 +352,6 @@
     self.err = err;
 }
 
-// select
-- (RTSDBExtra *(^)(NSString *, rt_select_block_t))onFetchDics {
-    return ^(NSString *sql, rt_select_block_t b) {
-        if (!b) {
-            NSError *error;
-            rt_error(@"RTSync onFetchDics(): arg block can not be NULL", 109, &error);
-            self.err = error;
-            return self;
-        } else return self.onWorkQueue(^() {
-            NSArray *result = [self selectDics:sql];
-            if (result) {
-                b(result);
-            }
-        });
-    };
-}
-
 - (NSArray <NSDictionary *>*)selectDics:(NSString *)sql {
     
     NSError *err;
@@ -380,16 +361,44 @@
     return results;
 }
 
+- (RTSDBExtra *(^)(NSString *))onFetch {
+    return ^(NSString *sql) {
+        if (!sql || sql.length == 0) {
+            return [self extraError:@"sql recieved by onFetch is empty!" withCode:109];
+        } else return self.onWorkQueue(^(){
+            self.arrResult = [self selectObjs:sql];
+        });
+    };
+}
+
+- (RTSDBExtra *(^)(rt_select_block_t))onResult {
+    return ^(rt_select_block_t block) {
+        if (!block) {
+            return self;
+        }
+        return self.onWorkQueue(^() {
+            block(self.arrResult);
+        });
+    };
+}
+
+- (RTSDBExtra *)extraError:(NSString *)msg withCode:(int)code {
+    NSError *error;
+    rt_error(msg, code, &error);
+    self.err = error;
+    return self;
+}
+
 // select
 - (RTSDBExtra *(^)(NSString *, rt_select_block_t))onFetchObjs {
     return ^(NSString *sql, rt_select_block_t b) {
         if (!b) {
-            NSError *error;
-            rt_error(@"RTSync onFetchObjs(): arg block can not be NULL.", 109, &error);
-            self.err = error;
-            return self;
+            return [self extraError:@"RTSDBExtra onFetchObjs(): arg block can not be NULL." withCode:109];
         } else return self.onWorkQueue(^() {
             NSArray *result = [self selectObjs:sql];
+            for (int i = 0; i < 100000; i++) {
+                NSLog(@"%d", i);
+            }
             if (result) {
                 b(result);
             }
@@ -419,9 +428,7 @@
                 block();
             } @catch (NSException *exception) {
                 [self.dbManager rollback];
-                NSError *err;
-                rt_error(@"Transaction failed!", 110, &err);
-                self.err = err;
+                [self extraError:@"Transaction failed!" withCode:110];
             }
             [self.dbManager commit];
         });
@@ -434,9 +441,7 @@
             @try {
                 block();
             } @catch (NSException *exception) {
-                NSError *err;
-                rt_error(@"Transaction failed!", 110, &err);
-                self.err = err;
+                [self extraError:@"Transaction failed!" withCode:110];
                 self.rollback = YES;
             }
         });

@@ -42,13 +42,29 @@
     };
 }
 
+- (void (^)(dispatch_queue_t, void (^)(RTSDBExtra *)))on {
+    return ^(dispatch_queue_t q, void (^block)(RTSDBExtra *)) {
+        if (!block) return;
+        dispatch_async(q, ^{
+           block(RT_EXTRA.onQueue(q));
+        });
+    };
+}
+
+- (RTSDBExtra *)onCurrent {
+    return RT_EXTRA;
+}
 // ---
-- (RTSDBExtra *)onDefault {
-    if (_defaultQueue == NULL) {
-        return RT_EXTRA;
-    } else {
-        return RT_EXTRA.onQueue(_defaultQueue);
-    }
+- (void (^)(RTQueueBlock))onDefault {
+    return ^(RTQueueBlock block) {
+        dispatch_queue_t q = self.defaultQueue;
+        if (q == NULL) {
+            q = dispatch_get_main_queue();
+        }
+        self.on(q, ^(RTSDBExtra *dber) {
+            block(dber);
+        });
+    };
 }
 
 - (RTSDBExtra *(^)(NSString *))onOpen {

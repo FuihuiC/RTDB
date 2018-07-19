@@ -10,7 +10,7 @@
 #import "PPTerm.h"
 #import "PPColumns.h"
 
-typedef void(^PPSQLSubBlock)(id<PPSQLProtocol>);
+
 typedef void(^PPSQLTermBlock)(PPTerm *);
 typedef void(^PPSQLColumnBlock)(PPColumns *);
 // --------------PPSQL---------------

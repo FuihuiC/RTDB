@@ -13,7 +13,12 @@
 #pragma mark - PPTerm
 // ---------------------------------------------------
 @implementation PPTerm
-INIT_WITH_MSTRING
+- (instancetype)init {
+    if (self = [super init]) {
+        _mStrResult = [NSMutableString string];
+    } 
+    return self;
+}
 
 - (PPTerm *(^)(NSString *))add {
     return ^(NSString *args) {

@@ -8,6 +8,8 @@
 
 #import "RTSDBExtra.h"
 
+
+typedef void(^RTQueueBlock)(RTSDBExtra *dber);
 NS_SWIFT_UNAVAILABLE("")
 @interface RTSDB : NSObject
 
@@ -17,27 +19,23 @@ NS_SWIFT_UNAVAILABLE("")
 /**
  * If the defaultQueue is set, all operations will be executed on this queue
  * until a new queue is set up.
- * Set a new queue can call setDefaultQueue:, onQueue and onMain.
- * But onQueue and onMain did not change the defaultQueue.
- *
- * Call onDefault, back to defaultQueue.
- *
- * Default is NULL, and all operations will be executed on current queue.
  */
 @property (nonatomic, strong) dispatch_queue_t defaultQueue;
 
 /**
- * After call onQueue() or onMain(), all operate on the queue until
- * calling onQueue() again or call onMain()
- *
- * If did not set a defaultQueue, calling onDefault will not change the queue.
+ * This method will not change a queue.
  */
-- (RTSDBExtra *)onDefault;
+- (RTSDBExtra *)onCurrent;
 
-- (RTSDBExtra *(^)(dispatch_queue_t))onQueue;
-@property (nonatomic, readonly) RTSDBExtra *(^onQueue)(dispatch_queue_t);
-
-- (RTSDBExtra *)onMain;
+/**
+ * Change to the given queue, and callback a RTSDBExtra instance.
+ */
+@property (nonatomic, readonly) void(^on)(dispatch_queue_t, RTQueueBlock);
+/**
+ * Change to the default queue, and callback a RTSDBExtra instance.
+ * If RTSDB dose not have a defaultQueue, it will change back to MainQueue.
+ */
+@property (nonatomic, readonly) void(^onDefault)(RTQueueBlock);
 
 /** close database */
 - (void)onClose;
