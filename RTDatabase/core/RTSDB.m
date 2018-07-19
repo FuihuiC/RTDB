@@ -34,14 +34,6 @@
     return RT_EXTRA.onMain;
 }
 
-- (RTSDBExtra *(^)(dispatch_queue_t))onQueue {
-    return ^RTSDBExtra *(dispatch_queue_t q) {
-        if (q == NULL) return self.onMain;
-        
-        return RT_EXTRA.onQueue(q);
-    };
-}
-
 - (void (^)(dispatch_queue_t, void (^)(RTSDBExtra *)))on {
     return ^(dispatch_queue_t q, void (^block)(RTSDBExtra *)) {
         if (!block) return;
@@ -64,18 +56,6 @@
         self.on(q, ^(RTSDBExtra *dber) {
             block(dber);
         });
-    };
-}
-
-- (RTSDBExtra *(^)(NSString *))onOpen {
-    return ^(NSString *path) {
-        return RT_EXTRA.onOpen(path);
-    };
-}
-
-- (RTSDBExtra *(^)(NSString *, int))onOpenFlags {
-    return ^(NSString *path, int flags) {
-        return RT_EXTRA.onOpenFlags(path, flags);
     };
 }
 
