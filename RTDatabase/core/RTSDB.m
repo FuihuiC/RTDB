@@ -7,13 +7,13 @@
 //
 
 #import "RTSDB.h"
-#define RT_EXTRA [[RTSDBExtra alloc] initWithDBManager:self.db withDefaultQueue:self.defaultQueue]
+#define RT_EXTRA [[RTSDBExtra alloc] initWithDBManager:self.db]
 ///----------------------------------------------------------
 ///----------------------------------------------------------
 ///----------------------------------------------------------
 #pragma mark - RTSDBExtra
 @interface RTSDBExtra ()
-- (instancetype)initWithDBManager:(RTDBDefault *)dbManager withDefaultQueue:(dispatch_queue_t)q;
+- (instancetype)initWithDBManager:(RTDBDefault *)dbManager;
 @end
 
 ///----------------------------------------------------------
@@ -26,6 +26,7 @@
 - (instancetype)init {
     if (self = [super init]) {
         _db = [[RTDBDefault alloc] init];
+        _defaultQueue = dispatch_get_main_queue();
     }
     return self;
 }
@@ -38,7 +39,7 @@
     return ^(dispatch_queue_t q, void (^block)(RTSDBExtra *)) {
         if (!block) return;
         dispatch_async(q, ^{
-           block(RT_EXTRA.onQueue(q));
+           block(RT_EXTRA);
         });
     };
 }
@@ -49,11 +50,7 @@
 // ---
 - (void (^)(RTQueueBlock))onDefault {
     return ^(RTQueueBlock block) {
-        dispatch_queue_t q = self.defaultQueue;
-        if (q == NULL) {
-            q = dispatch_get_main_queue();
-        }
-        self.on(q, ^(RTSDBExtra *dber) {
+        self.on(self.defaultQueue, ^(RTSDBExtra *dber) {
             block(dber);
         });
     };

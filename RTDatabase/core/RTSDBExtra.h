@@ -9,8 +9,6 @@
 #import "RTDBDefault.h"
 
 typedef void(^rt_error_b_t)(NSError *error);
-
-typedef void(^rt_block_t)(void);
 typedef void(^rt_next_block_t)(RTNext *next);
 typedef void(^rt_step_block_t)(NSDictionary *result, int idx, BOOL *stop);
 
@@ -20,18 +18,18 @@ NS_SWIFT_UNAVAILABLE("")
 @interface RTSDBExtra : NSObject
 
 #pragma mark Usual
-// back to defaultQueue
-- (RTSDBExtra *)onDefault;
-
-@property (nonatomic, readonly) RTSDBExtra *(^onQueue)(dispatch_queue_t);
-
 - (RTSDBExtra *)onMain;
-
-@property (nonatomic, readonly) RTSDBExtra *(^onWorkQueue)(rt_block_t);
-
 @property (nonatomic, readonly) void(^onError)(rt_error_b_t);
 
 - (void)onEnd;
+- (RTSDBExtra *)reset;
+/**
+ * When invoked after onFetch, onResult will callback
+ * the array of objects corresponding to the query table.
+ * Otherwise, onResult will call back the dictionary
+ * array of query results
+ */
+@property (nonatomic, readonly) RTSDBExtra *(^onResult)(rt_select_block_t);
 
 #pragma mark Normal
 /** open database if path exist */
@@ -81,9 +79,13 @@ NS_SWIFT_UNAVAILABLE("")
 
 @property (nonatomic, readonly) RTSDBExtra *(^onDelete)(id obj);
 
-
+/**
+ * OnFetch will look up the table based on the incoming SQL
+ * and associate each row's data to the object of the class
+ * and store it in the array.
+ * Call onResult will callback the array.
+ */
 @property (nonatomic, readonly) RTSDBExtra *(^onFetch)(NSString *);
-@property (nonatomic, readonly) RTSDBExtra *(^onResult)(rt_select_block_t);
 
 @property (nonatomic, readonly) RTSDBExtra *(^onFetchObjs)(NSString *, rt_select_block_t);
 

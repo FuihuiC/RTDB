@@ -8,37 +8,36 @@
 
 #import "RTSDBExtra.h"
 
+typedef void(^rt_block_t)(void);
+
 @interface RTSDBExtra () {
     va_list *_args;
-    dispatch_queue_t _work_q;
-    dispatch_queue_t _defaultQueue;
+//    dispatch_queue_t _defaultQueue;
 }
+
+@property (nonatomic, assign) BOOL isObjcMode;
+
 @property (nonatomic, weak) RTDBDefault *dbManager;
 
 @property (nonatomic, copy) NSString *sql;
 @property (nonatomic, strong) NSArray *arrArgs;
 @property (nonatomic, strong) NSDictionary *params;
-@property (nonatomic, strong) NSString *workQueueLabel;
 @property (nonatomic, assign) BOOL backMain; // Whether go back main;
 
 @property (nonatomic, strong) RTNext *next;
-
 // ---------------
 @property (nonatomic, strong) NSError *err;
-
 @property (nonatomic, assign) BOOL rollback; // Transaction rollback.
-
-
 @property (nonatomic, strong) NSArray *arrResult; // last time select result array.
+
+- (RTSDBExtra *(^)(rt_block_t))onRun;
 @end
 
 @implementation RTSDBExtra
 
-- (instancetype)initWithDBManager:(RTDBDefault *)dbManager withDefaultQueue:(dispatch_queue_t)q {
+- (instancetype)initWithDBManager:(RTDBDefault *)dbManager{
     if (self = [super init]) {
         self.dbManager = dbManager;
-        self->_defaultQueue = q;
-        self->_work_q = q;
     }
     return self;
 }
@@ -51,76 +50,36 @@
 
 #pragma mark method
 // run in the queue last set.
-- (RTSDBExtra *(^)(rt_block_t))onWorkQueue {
+- (RTSDBExtra *(^)(rt_block_t))onRun {
+  
     return ^RTSDBExtra *(rt_block_t block) {
-        
-        if (!block) return self;
-        
-        dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-        [self runOnWorkQueue:^{
-            block();
-            dispatch_semaphore_signal(semaphore);
-        }];
-        dispatch_semaphore_wait(semaphore, DISPATCH_TIME_FOREVER);
-        
-        return self;
+        if (self.err) return self;
+        return [self run:block];
     };
 }
 
-- (void)runOnWorkQueue:(rt_block_t)block {
-    if (!block) return;
+- (RTSDBExtra *)run:(rt_block_t)block {
+    if (!block) return self;
     
-    if (self.backMain) {
-        if (![NSThread isMainThread]) {
-            dispatch_async(dispatch_get_main_queue(), block);
-        } else {
-            block();
-        }
-    } else if (self->_work_q != NULL) {
-        dispatch_async(self->_work_q, block);
-    } else {
+    if ([NSThread isMainThread] || !self.backMain) {
         block();
-    }
-}
-
-// back to defaultQueue
-- (RTSDBExtra *)onDefault {
-    
-    if (self.err) {
-        self.err = nil;
-    }
-    if (_sql) {
-        _sql = nil;
-    }
-    if (_params) {
-        _params = nil;
-    }
-    if (_args != NULL) {
-        va_end(*_args);
-    }
-    
-    if (self->_defaultQueue == NULL) {
         return self;
-    } else {
-        return self.onQueue(self->_defaultQueue);
     }
+    
+    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
+    dispatch_async(dispatch_get_main_queue(), ^{
+        block();
+        dispatch_semaphore_signal(semaphore);
+    });
+    dispatch_semaphore_wait(semaphore, DISPATCH_TIME_FOREVER);
+    return self;
 }
-
 // change queue.
 - (RTSDBExtra *)onMain {
     self.backMain = YES;
-    self->_work_q = NULL;
     return self;
 }
 
-- (RTSDBExtra *(^)(dispatch_queue_t))onQueue {
-    return ^RTSDBExtra *(dispatch_queue_t q) {
-        if (q == NULL) return self.onMain;
-        self.backMain = NO;
-        self->_work_q = q;
-        return self;
-    };
-}
 
 #pragma mark -
 // if error, callback.
@@ -128,9 +87,9 @@
     return ^(rt_error_b_t b) {
         if (!b) return;
         if (!self.err) return;
-        self.onWorkQueue(^{
-           b(self.err);
-        });
+        [self run:^{
+            b(self.err);
+        }];
     };
 }
 
@@ -138,17 +97,33 @@
     self.next = nil;
     self.err = nil;
     self.dbManager = nil;
-    _work_q = NULL;
-    _defaultQueue = NULL;
 }
 
+- (RTSDBExtra *)reset {
+    self.rollback = NO;
+    self.backMain = NO;
+    self.isObjcMode = NO;
+    
+    self.arrResult = nil;
+    self.arrArgs = nil;
+    self.params = nil;
+    if (_args != NULL) {
+        va_end(*_args);
+        _args = 0x0;
+    }
+    
+    self.next = nil;
+    
+    self.err = nil;
+    return self;
+}
 //------
 - (RTSDBExtra *)onDone {
     
     if (!self.next) {
         return self;
     } else {
-        return self.onWorkQueue(^() {
+        return self.onRun(^() {
             NSError *err;
             while ([self.next stepWithError:&err]) {}
             self.err = err;
@@ -163,7 +138,7 @@
         } else {
             if (!self.next) {
                 return self;
-            } else return self.onWorkQueue(^(){
+            } else return self.onRun(^(){
                 b(self.next);
             });
         }
@@ -176,7 +151,7 @@
         if (!b) {
             return [self extraError:@"RTSync onEnum(): arg block can not be NULL" withCode:109];
         } else {
-            return self.onWorkQueue(^(){
+            return self.onRun(^(){
                 if (self.next) self.lockOnEnum(b);
             });
         }
@@ -205,7 +180,7 @@
 - (RTSDBExtra *(^)(NSString *, int))onOpenFlags {
     
     return ^(NSString *path, int flags) {
-        return self.onWorkQueue(^() {
+        return self.onRun(^() {
             [self openDB:path withFlags:flags];
         });
     };
@@ -222,7 +197,7 @@
 - (RTSDBExtra *(^)(NSString *, NSDictionary *))execDict {
     
     return ^(NSString *sql, NSDictionary *params) {
-        return self.onWorkQueue(^(void){
+        return self.onRun(^(void){
             [self execSql:sql withParams:params withArrArgs:nil withArgs:nil];
         });
     };
@@ -230,7 +205,7 @@
 
 - (RTSDBExtra *(^)(NSString *, NSArray *))execArr {
     return ^(NSString *sql, NSArray *arrArgs) {
-        return self.onWorkQueue(^(void){
+        return self.onRun(^(void){
             [self execSql:sql withParams:nil withArrArgs:arrArgs withArgs:nil];
         });
     };
@@ -246,14 +221,14 @@
 
 - (RTSDBExtra *(^)(NSString *, va_list *))queryArgs {
     return ^(NSString *sql, va_list *args) {
-        return self.onWorkQueue(^(void) {
+        return self.onRun(^(void) {
             [self execSql:sql withParams:nil withArrArgs:nil withArgs:args];
         });
     };
 }
 
 - (void)execSql:(NSString *)sql withParams:(NSDictionary *)params withArrArgs:(NSArray *)arrArgs withArgs:(va_list *)args {
-    
+    _isObjcMode = NO;
     _sql = sql;
     _arrArgs = arrArgs;
     _params = params;
@@ -277,7 +252,7 @@
 #pragma mark -
 - (RTSDBExtra *(^)(Class))onCreate {
     return ^(Class cls) {
-        return self.onWorkQueue(^() {
+        return self.onRun(^() {
             [self tableCreat:cls];
         });
     };
@@ -293,7 +268,7 @@
 // insert
 - (RTSDBExtra *(^)(id obj))onInsert {
     return ^(id obj) {
-        return self.onWorkQueue(^() {
+        return self.onRun(^() {
             [self insertObj:obj];
         });
     };
@@ -309,7 +284,7 @@
 // update
 - (RTSDBExtra *(^)(id obj))onUpdate {
     return ^(id obj) {
-        return self.onWorkQueue(^() {
+        return self.onRun(^() {
             [self updateObj:obj];
         });
     };
@@ -317,7 +292,7 @@
 
 - (RTSDBExtra *(^)(id, NSDictionary *))onUpdateWithParams {
     return ^(id obj, NSDictionary *params) {
-        return self.onWorkQueue(^() {
+        return self.onRun(^() {
             [self updateObj:obj withParams:params];
         });
     };
@@ -339,7 +314,7 @@
 // delete
 - (RTSDBExtra *(^)(id obj))onDelete {
     return ^(id obj) {
-        return self.onWorkQueue(^() {
+        return self.onRun(^() {
             [self deleteObj:obj];
         });
     };
@@ -365,7 +340,7 @@
     return ^(NSString *sql) {
         if (!sql || sql.length == 0) {
             return [self extraError:@"sql recieved by onFetch is empty!" withCode:109];
-        } else return self.onWorkQueue(^(){
+        } else return self.onRun(^(){
             self.arrResult = [self selectObjs:sql];
         });
     };
@@ -376,8 +351,25 @@
         if (!block) {
             return self;
         }
-        return self.onWorkQueue(^() {
-            block(self.arrResult);
+
+        return self.onRun(^() {
+            if (self.isObjcMode) {
+                block(self.arrResult);
+            } else {
+                
+                if (!self.next) return;
+                
+                NSMutableArray *mArrResult = [NSMutableArray array];
+                [self.next enumAllSteps:^(NSDictionary *dic, int step, BOOL *stop, NSError *err) {
+                    if (dic) {
+                        [mArrResult addObject:dic];
+                    }
+                }];
+                if (mArrResult.count > 0) {
+                    self.arrResult = mArrResult.copy;
+                }
+                block(self.arrResult);
+            }
         });
     };
 }
@@ -394,11 +386,8 @@
     return ^(NSString *sql, rt_select_block_t b) {
         if (!b) {
             return [self extraError:@"RTSDBExtra onFetchObjs(): arg block can not be NULL." withCode:109];
-        } else return self.onWorkQueue(^() {
+        } else return self.onRun(^() {
             NSArray *result = [self selectObjs:sql];
-            for (int i = 0; i < 100000; i++) {
-                NSLog(@"%d", i);
-            }
             if (result) {
                 b(result);
             }
@@ -410,6 +399,7 @@
     
     NSArray <NSDictionary *>* results;
     NSError *err;
+    _isObjcMode = YES;
     results = [self.dbManager fetchObjSql:sql withError:&err];
     self.err = err;
     return results;
@@ -422,7 +412,7 @@
         
         NSAssert(block != NULL, @"RTDB: - The block while transacting can not be NULL.");
         
-        return self.onWorkQueue(^(){
+        return self.onRun(^(){
             [self.dbManager begin];
             @try {
                 block();
@@ -437,7 +427,7 @@
 
 - (RTSDBExtra *(^)(rt_block_t))onTrans {
     return ^(rt_block_t block) {
-        return self.onWorkQueue(^{
+        return self.onRun(^{
             @try {
                 block();
             } @catch (NSException *exception) {
@@ -449,7 +439,7 @@
 }
 
 - (RTSDBExtra *)onBegin {
-    return self.onWorkQueue(^{
+    return self.onRun(^{
         self.rollback = NO;
         [self.dbManager begin];
     });
@@ -459,7 +449,7 @@
     if (self.rollback) {
         return self;
     }
-    return self.onWorkQueue(^{
+    return self.onRun(^{
         [self.dbManager commit];
     });
 }
@@ -468,7 +458,7 @@
     if (!self.rollback) {
         return self;
     }
-    return self.onWorkQueue(^{
+    return self.onRun(^{
         [self.dbManager rollback];
     });
 }
