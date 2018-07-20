@@ -146,39 +146,44 @@ When calling RTSDB instance's method, it will return a new RTSDBExtra instance. 
 // init a RTSDB instance.
 RTSDB *db = [[RTSDB alloc] init];
 
-db.onDefault
-.onOpen(@"~/RTDB.sqlite3")
-.onError(^(NSError *err) {
-    NSLog(@"%@", err);
+db.onDefault(^(RTSDBExtra *dber) {
+    dber.onOpen(@"~/*.sqlite3")
+    .onError(^(NSError *error) {
+        NSLog(@"%@", error);
+    });
 });
 ```
-In RTSDBExtra, an asynchronous execution scheme is provided.After the `onMain` is invoked, the operation will be executed on the main queue.After the `onQueue` is invoked, the operation will be executed on the specified queue.  
-If the default queue is set, the operation after the `onDefault` is invoked will be executed on the default queue. Otherwise, it is executed on the main queue.The queues can be switched on many times during the call process.
+In RTSDBExtra, an asynchronous execution scheme is provided.After the `onCurrent` is invoked, the operation will be executed on the current queue.After the `on` is invoked, the operation will be executed on the specified queue.  
+If the default queue is set, the operation after the `onDefault` is invoked will be executed on the default queue. Otherwise, it is executed on the main queue.The queues can be switched on many times during the call process.  
+Calling onMain will return to the main thread
+
+
 > `onQueue` will not change the default queue.
 ```
 // select
-db.onDefault
-.execArgs(@"SELECT * FROM DB", nil) 0))
-.onQueue(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0))
-.onEnum(^(NSDictionary *dic, int step, BOOL *stop){
-    // Called in a subqueue
-    NSLog(@"%@", dic);
-    NSLog(@"%d", step);
-    NSLog(@"%@", [NSThread currentThread]);
-})
-.onError(^(NSError *err) {
-    NSLog(@"%@", err);
-});
+    sdb
+    .onCurrent
+    .execArgs(@"SELECT * FROM DB", nil)
+    .onEnum(^(NSDictionary *result, int idx, BOOL *stop) {
+        // Called in a subqueue
+        NSLog(@"%@", result);
+        NSLog(@"%d", idx);
+        NSLog(@"%@", [NSThread currentThread]);
+    })
+    .onError(^(NSError *error) {
+        NSLog(@"%@", error);
+    });
 ```
 * Prepare SQL
 
 RTDB provides a quick solution for building SQL strings.Concretely implemented in classes beginning with PP.  
-All classes starting with PP comply with the protocol PPSQLProtocol.The protocol has two methods(build, add) and a property(mStrResult) which are @repuired, and several optional methods.  
-The required property named mStrResult is the container of sql string. 
 
 PPSQL provides several entry methods for creating SQL for SQLite common operations.   
-1. If you need to add column to the SQL string, call the `subs`  method after calling the corresponding entry method.  
-The method `subs` will callback an object followed the protocol PPSQLProtocol. Look at the `PPSubSQL.h` file in detail.
+1. If you need to add column to the SQL string, call the `columns`  method after calling the corresponding entry method.  
+The method `columns` will callback an object typed of the class `PPColumns`. Look at the `PPColumns.h` file in detail.  
+`columns` can accept parameters of dictionary array and string type.  
+When creating tables, SQLite needs to know the type of each column, so RTDatabase provides four methods: `TEXT`, `INTEGER`, `BLOB` and `REAL`.
+
 ```
 e.g.
 /**
@@ -186,13 +191,14 @@ e.g.
 * you need to tell SQLite all columns and every column's database type.
 */
 PPSQL *pp = [[PPSQL alloc] init];
-NSString *sql = pp.CREATE(@"Person").subs(^(id<PPSQLProtocol> sub) {
-sub.INTEGER(@"_id").primaryKey.autoincrement.notNull
-    .TEXT(@"name")
-    .INTEGER(@"age")
-    .REAL(@"height")
-    .BLOB(@"info");
-}).build;
+NSString *sql = pp.CREATE(@"Person").columns(^(PPColumns *columns) {
+        columns.INTEGER(@"_id").primaryKey.autoincrement.notNull
+        .TEXT(@"name")
+        .INTEGER(@"age")
+        .REAL(@"height")
+        .BLOB(@"info");
+    }).build;
+
 
 NSLog(@"%@", sql);
 
@@ -205,17 +211,26 @@ Print Result:
 The method terms will callback an object typed of `PPTerm`.`PPTerm` contains many SQLite SQL clauses. Please select them according to requirements.
 ```
 e.g.
-sql = pp.UPDATE(@"Person").subs(^(id<PPSQLProtocol> sub) {
-sub.column(@"age");
-}).terms(^(PPTerm *term) {
-term.where.equal(@"_id", @(1));
-}).build;
+sql = pp.UPDATE(@"Person").columns(^(PPColumns *columns) {
+
+    columns
+    // NSDictionary *
+    .column(@{@"nameDict": @"TEXT", @"ageDict": @"INTEGER", @"genderDict": @"TEXT"})
+    // NSArray<NSString *> *
+    .column(@[@"nameArr", @"ageArr", @"genderArr"])
+    // NSString *
+    .column(@"name").column(@"age").column(@"gender");
+})
+.terms(^(PPTerm *term){
+    term.where.moreOrEquel(@"age", @(12));
+})
+.build;
 
 NSLog(@"%@", sql);
 
 Print Result:
 
--> UPDATE Person SET age = ? WHERE _id = 1
+-> UPDATE Person SET ageDict = ?, nameDict = ?, genderDict = ?, nameArr = ?, ageArr = ?, genderArr = ?, name = ?, age = ?, gender = ? WHERE age >= 12
 ```
 3. Custom SQL string, please try calling method `add`.
 #### Pay Attention:
