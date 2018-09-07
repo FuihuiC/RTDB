@@ -111,16 +111,6 @@ RT_EXTERN int rt_str_compare(rt_char_t *src1, rt_char_t *src2);
 /** mutable a const char * */
 RT_EXTERN char *rt_str_mutable(const char *src);
 
-/**
- * The two strings are stitching together and the result of the splicing is returned.
- * After the end of the use, free is needed.
- */
-RT_EXTERN char *rt_strcat(char *str1, char *str2) ;
-RT_EXTERN void rt_str_append_v(
-                               char **dest, /* Stitching result pointer */
-                               ...          /* Indeterminate parameter. char * */
-);
-
 typedef struct RT_PRO_INFO rt_pro_info;
 typedef struct RT_PRO_INFO * rt_pro_info_p;
 typedef void(^rt_rpoInfo_block_t)(rt_pro_info *pro);

@@ -70,7 +70,7 @@ typedef enum : NSUInteger {
         return NO;
     }
     
-    return rt_sqlite3_exec([self sqlite3_db], [info creatSql], err);
+    return rt_sqlite3_exec([self sqlite3_db], [info createSql], err);
 }
 
 // insert

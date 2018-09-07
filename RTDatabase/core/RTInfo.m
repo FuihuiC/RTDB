@@ -9,6 +9,15 @@
 #import "RTInfo.h"
 #import <objc/runtime.h>
 
+@interface NSMutableString (Extra)
+- (void)rt_appendCString:(rt_char_t *)aString;
+@end
+
+@implementation NSMutableString (Extra)
+- (void)rt_appendCString:(rt_char_t *)aString {
+    [self appendFormat:@"%s", aString];
+}
+@end
 
 #pragma mark - private interface
 /** property type */
@@ -229,12 +238,11 @@ static int rt_prepare_info(Class cls, rt_pro_info_p *proInfos, NSError **err) {
 //////////////////////////////////////////////////////
 
 @interface RTInfo () {
-    char        *_clsName;  // class name
-    char        *_create;   // create sql
-    char        *_insert;   // insert sql
-    char        *_update;   // update sql
-    char        *_delete;   // delete sql
-    char        *_maxid;    // max _id sql
+    rt_char_t   *_clsName;  // class name
+    rt_char_t   *_insert;   // insert sql
+    rt_char_t   *_update;   // update sql
+    rt_char_t   *_delete;   // delete sql
+    rt_char_t   *_maxid;    // max _id sql
 }
 @property (nonatomic, assign) int count;
 @end
@@ -243,6 +251,7 @@ static int rt_prepare_info(Class cls, rt_pro_info_p *proInfos, NSError **err) {
 
 - (instancetype)initWithClass:(Class)cls withError:(NSError *__autoreleasing*)error {
     if (self = [super init]) {
+        
         _cls = cls;
         NSError *err;
         _count = rt_prepare_info(cls, &_prosInfo, &err);
@@ -259,71 +268,87 @@ static int rt_prepare_info(Class cls, rt_pro_info_p *proInfos, NSError **err) {
 
 - (rt_char_t *)className {
     if (_clsName == NULL) {
-        _clsName = (char *)class_getName(_cls);
+        _clsName = class_getName(_cls);
     }
     return _clsName;
 }
 
 - (rt_char_t *)maxidSql {
     if (_maxid == NULL) {
-        rt_str_append_v(&_maxid, "SELECT MAX(_id) FROM ", [self className], NULL);
+        _maxid = [[NSString stringWithFormat:@"SELECT MAX(_id) FROM %s", [self className]] UTF8String];
     }
     return _maxid;
 }
 
-- (rt_char_t *)creatSql {
-    if (_create == NULL) {
-        rt_str_append_v(&_create, "CREATE TABLE if not exists '", [self className], "' ('_id' integer primary key autoincrement not null", NULL);
-        for (rt_pro_info *pro = _prosInfo; pro != NULL; pro = pro->next) {
-            rt_char_t *bindT = rt_sqlite3_bind_type(pro->t);
-            rt_str_append_v(&self->_create, ", '", pro->name, "' '", bindT, "'", NULL);
-        }
-       
-        rt_str_append_v(&_create, ")", NULL);
+- (rt_char_t *)createSql {
+    
+    NSMutableString *mCreateSql = [NSMutableString stringWithString:@"CREATE TABLE if not exists '"];
+    
+    [mCreateSql rt_appendCString:[self className]];
+    [mCreateSql appendString:@"' ('_id' integer primary key autoincrement not null"];
+    
+    for (rt_pro_info *pro = _prosInfo; pro != NULL; pro = pro->next) {
+        rt_char_t *bindT = rt_sqlite3_bind_type(pro->t);
+        [mCreateSql appendFormat:@", '%s' '%s'", pro->name, bindT];
     }
-    return _create;
+    [mCreateSql appendString:@")"];
+
+    return [mCreateSql UTF8String];
 }
 
 - (rt_char_t *)insertSql {
     if (_insert == NULL) {
-        rt_str_append_v(&_insert, "INSERT INTO ", [self className], "(", NULL);
-        char *names = NULL;
-        char *values = NULL;
         
-        int i = 0;
+        NSMutableString *mInsertSql = [NSMutableString stringWithString:@"INSERT INTO "];
+        
+        NSMutableString *mNames = [NSMutableString string];
+        NSMutableString *mValues = [NSMutableString string];
+        
         for (rt_pro_info *pro = _prosInfo; pro != NULL; pro = pro->next) {
-            BOOL end = ((self->_count - 1) == i);
             
-            rt_str_append_v(&names, pro->name, end ? ")" : ", ", NULL);
-            rt_str_append_v(&values, ":", pro->name,  end ? ")" : ", ", NULL);
-            
-            i++;
+            [mNames appendFormat:@"%s, ", pro->name];
+            [mValues appendFormat:@":%s, ", pro->name];
         }
         
-        if (names != NULL && values != NULL) {
-            rt_str_append_v(&_insert, names, " VALUES (", values, NULL);
+        if ([mNames hasSuffix:@","]) {
+            [mNames deleteCharactersInRange:NSMakeRange(mNames.length - 1, 1)];
+            [mNames appendString:@")"];
         }
+        
+        if ([mValues hasSuffix:@","]) {
+            [mValues deleteCharactersInRange:NSMakeRange(mValues.length - 1, 1)];
+            [mValues appendString:@")"];
+        }
+        
+        [mInsertSql appendFormat:@"%@  VALUES (%@", mNames, mValues];
+
+        _insert = [mInsertSql UTF8String];
     }
     return _insert;
 }
 
 - (rt_char_t *)updateSql {
     if (_update == nil) {
-        int i = 0;
-        rt_str_append_v(&_update, "UPDATE ", [self className], " SET ", NULL);
+
+        NSMutableString *mUpdateSql = [NSMutableString stringWithString:@"UPDATE "];
+        [mUpdateSql appendFormat:@"%s SET ", [self className]];
+        
         for (rt_pro_info *pro = _prosInfo; pro != NULL; pro = pro->next) {
-            BOOL end = ((self.count - 1) == i);
-            rt_str_append_v(&self->_update, pro->name, end ? " = ?" : " = ?, ", NULL);
-            i++;
+            [mUpdateSql appendFormat:@"%s = ?,", pro->name];
         }
-        rt_str_append_v(&_update, " WHERE _id = ", NULL);
+        if ([mUpdateSql hasSuffix:@","]) {
+            [mUpdateSql deleteCharactersInRange:NSMakeRange(mUpdateSql.length - 1, 1)];
+        }
+        
+        [mUpdateSql appendString:@" WHERE _id = "];
+        _update = [mUpdateSql UTF8String];
     }
     return _update;
 }
 
 - (rt_char_t *)deleteSql {
     if (_delete == nil) {
-        rt_str_append_v(&_delete, "DELETE FROM ", [self className], " WHERE _id = ", NULL);
+       _delete = [[NSString stringWithFormat:@"DELETE FROM %s WHERE _id = ", [self className]] UTF8String];
     }
     return _delete;
 }
@@ -331,17 +356,12 @@ static int rt_prepare_info(Class cls, rt_pro_info_p *proInfos, NSError **err) {
 - (rt_char_t *)updateSqlWithID:(NSInteger)_id {
     if ([self updateSql] == NULL)  return NULL;
     
-    char *updateSql = (char *)calloc((strlen([self updateSql]) + rt_integer_digit(_id)), char_len);
-    sprintf(updateSql, "%s%ld", [self updateSql], (long)_id);
-    return (rt_char_t *)updateSql;
+    return [[NSString stringWithFormat:@"%s %ld", _update, _id] UTF8String];
 }
 
 - (rt_char_t *)deleteSqlWithID:(NSInteger)_id {
     if ([self deleteSql] == NULL) return NULL;
-    
-    char *deleteSql = (char *)calloc((strlen([self deleteSql]) + rt_integer_digit(_id)), char_len);
-    sprintf(deleteSql, "%s%ld", [self deleteSql], (long)_id);
-    return (rt_char_t *)deleteSql;
+    return [[NSString stringWithFormat:@"%s %ld", _delete, _id] UTF8String];
 }
 
 - (void)dealloc {
@@ -349,4 +369,6 @@ static int rt_prepare_info(Class cls, rt_pro_info_p *proInfos, NSError **err) {
         rt_free_info(_prosInfo);
     }
 }
+
 @end
+

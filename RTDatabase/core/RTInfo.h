@@ -23,15 +23,13 @@ NS_SWIFT_UNAVAILABLE("")
 
 @property (nonatomic, strong) Class cls;
 
-
 - (instancetype)initWithClass:(Class)cls withError:(NSError *__autoreleasing*)error;
 
-
-
 - (rt_char_t *)className;
-- (rt_char_t *)creatSql;
+- (rt_char_t *)createSql;
 - (rt_char_t *)insertSql;
 - (rt_char_t *)maxidSql;
+
 /**
  Method make the update sql complete.
 

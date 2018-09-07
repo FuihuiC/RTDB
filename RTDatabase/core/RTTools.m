@@ -40,64 +40,6 @@ char *rt_str_mutable(const char *src) {
     return result;
 }
 
-// The two strings are stitching together and the result of the splicing is returned.
-char *rt_strcat(char *str1, char *str2) {
-    
-    unsigned long len_1 = 0;
-    unsigned long len_2 = 0;
-    if (str1 != NULL) {
-        len_1 = strlen(str1);
-    }
-    if (str2 != NULL) {
-        len_2 = strlen(str2);
-    }
-    
-    char *result = NULL;
-    if (len_1 + len_2 == 0) {
-        return NULL;
-    }
-    
-    result = (char *)malloc((len_1 + len_2 + 1) * sizeof(char));
-    
-    if (len_1 > 0) {
-        memmove(result, str1, len_1);
-        memmove(result + len_1, "\0", sizeof(char));
-    }
-    
-    if (len_2 > 0) {
-        memmove(result + len_1, str2, len_2);
-        memmove(result + len_1 + len_2, "\0", sizeof(char));
-    }
-    return result;
-}
-
-void rt_str_append_v(char **dest, ...) {
-    if (dest == NULL) return;
-    
-    size_t char_len = sizeof(char);
-    size_t len = 0;
-    
-    va_list ap;
-    va_start(ap, dest);
-    
-    if (*dest != NULL) {
-        len += strlen(*dest);
-    }
-    
-    size_t src_len = 0;
-    
-    for (char *src = va_arg(ap, char *); src != NULL; src = va_arg(ap, char *)) {
-        src_len = strlen(src);
-        *dest = realloc(*dest, (len + src_len) * char_len);
-        memmove(*dest + len, src, src_len);
-        len += src_len;
-    }
-    va_end(ap);
-    
-    *dest = realloc(*dest, (len + 1) * char_len);
-    memmove(*dest + len, "\0", char_len);
-}
-
 /////////////////////////////
 /////////////////////////////
 /////////////////////////////
