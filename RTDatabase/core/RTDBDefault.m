@@ -1,360 +1,473 @@
 //
-//  RTDBDefault.m
-//  RTSQLite
+//  RTOBDB.m
+//  RTDatebase
 //
-//  Created by ENUUI on 2018/5/8.
-//  Copyright © 2018年 ENUUI. All rights reserved.
+//  Created by hc-jim on 2019/2/25.
+//  Copyright © 2019 ENUUI. All rights reserved.
 //
 
 #import "RTDBDefault.h"
+#import <objc/runtime.h>
 
-typedef void(^RT_DB_STEP_BLOCK)(void *stmt, Class cls, rt_pro_info *proInfo, BOOL cached, BOOL *stop);
+static NSString *const kRT_PRIMARY_PROPERTY = @"_id";
 
+static NSString *const kRT_SQL_FECTH_MAX_ID = @"SELECT MAX(_id) FROM %@";
+static NSString *const kRT_SQL_INSERT_OBJ = @"INSERT INTO %@ (%@) VALUES (:%@)";
+static NSString *const kRT_SQL_CREATE_TABLE = @"CREATE TABLE if not exists'%@' ('_id' 'INTEGER' primary key autoincrement NOT NULL";
+static NSString *const kRT_SQL_UPDATE_OBJ = @"UPDATE %@ SET %@ WHERE _id = %@";
+static NSString *const kRT_SQL_DELETE_OBJ = @"DELETE FROM %@ WHERE _id = %@";
+static NSString *const kRT_SQL_SELECT_TABLE = @"SELECT * FROM %@ ";
 
-typedef enum : NSUInteger {
-    op_insert,
-    op_update,
-    op_delete,
-} RTDBOperateMode;
-
-@interface RTDBDefault () {
-    dispatch_semaphore_t _semaphore;
+// ---------------------------------------------------
+// Whether two strings are equal
+static int rt_str_compare(const char *src1, const char *src2) {
+    return (strcmp(src1, src2) == 0);
 }
-@property (nonatomic, strong) NSMutableDictionary<NSString *, RTInfo *> *mDicTablesCache;
+
+// 获取property类型
+static rt_objc_t rt_object_type(const char *attr) {
+    
+    if (strlen(attr) > 2) {
+        char idx_1 = attr[1];
+        if (idx_1 == '@') {
+            if (strlen(attr) > 7    && // NSString
+                attr[5]     == 'S'  &&
+                attr[6]     == 't'  &&
+                attr[7]     == 'r') {
+                return rttext;
+            } else if (strlen(attr) > 8    && // NSData
+                       attr[6]     == 'a'  &&
+                       attr[7]     == 't'  &&
+                       attr[8]     == 'a') {
+                return rtblob;
+            } else if (strlen(attr) > 8    && // NSDate
+                       attr[6]     == 'a'  &&
+                       attr[7]     == 't'  &&
+                       attr[8]     == 'e') {
+                return rtdate;
+            } else if (strlen(attr) > 8    && // NSNumber
+                       attr[5]     == 'N'  &&
+                       attr[6]     == 'u'  &&
+                       attr[7]     == 'm') {
+                return rtdouble;
+            }
+        } else if (idx_1 == 'c' || // char
+                   idx_1 == 'C' || // unsigned char, Boolean
+                   idx_1 == 's' || // short
+                   idx_1 == 'S' || // unsigned short
+                   idx_1 == 'i' || // int
+                   idx_1 == 'I' || // unsigned int
+                   idx_1 == 'q' || // long, long long
+                   idx_1 == 'Q' || // unsigned long, unsigned long long, size_t
+                   idx_1 == 'B' || // BOOL, bool
+                   idx_1 == 'd' || // CGFloat, double
+                   idx_1 == 'f') { // float
+            return idx_1;
+        }
+    }
+    return 0;
+}
+
+// 根据property类型 获取 bind 类型
+static const char *rt_sqlite3_bind_type(rt_objc_t t) {
+    switch (t) {
+        case rttext:
+            return "TEXT";
+        case rtblob:
+            return "BLOB";
+        case rtfloat:
+        case rtdouble:
+        case rtdate:
+        case rtnumber:
+            return "REAL";
+        case rtchar:
+        case rtuchar:
+        case rtshort:
+        case rtushort:
+        case rtint:
+        case rtuint:
+        case rtlong:
+        case rtulong:
+        case rtbool:
+            return "INTEGER";
+        default:
+            return "";
+            break;
+    }
+}
+
+@interface RTClassInfo : NSObject
+@end
+
+@implementation RTClassInfo
+
++ (NSString *)className:(Class)cls {
+    return [NSString stringWithUTF8String:class_getName(cls)];
+}
+
++ (unsigned int)enumClassProperties:(Class)cls callback:(void(^)(const char *proName, const char *bindType))callback {
+    
+    unsigned int outCount;
+    objc_property_t *proList = class_copyPropertyList(cls, &outCount);
+    
+    if (outCount == 0) {
+        if (proList != NULL) {
+            free(proList);
+        }
+        return 0;
+    }
+    
+    for (objc_property_t pro = *proList; pro != NULL; pro = *(++proList)) {
+        const char *cn = property_getName(pro);
+        
+        if (strlen(cn) == 0) continue;
+        
+        rt_objc_t t = rt_object_type(property_getAttributes(pro));
+        if (t == 0) continue;
+        
+        if (rt_str_compare(cn, "_id")) continue;
+        
+        callback(cn, rt_sqlite3_bind_type(t));
+    }
+    
+    return outCount;
+}
+
++ (NSArray *)classAllPros:(Class)cls {
+    NSMutableArray *mArrPros = [NSMutableArray array];
+    [self enumClassProperties:cls callback:^(const char *proName, const char *bindType) {
+        if (proName != NULL) {
+            [mArrPros addObject:[NSString stringWithFormat:@"%s", proName]];
+        }
+    }];
+    return mArrPros.copy;
+}
+
++ (NSString *)createTableSQLFromClass:(Class)cls {
+    
+    NSString *clsName = [NSString stringWithUTF8String:class_getName(cls)];
+    
+    if (!clsName || [clsName isEqualToString:@"NSObject"]) {
+        return nil;
+    }
+    
+    NSMutableString *mCreateSQL = [NSMutableString stringWithFormat:kRT_SQL_CREATE_TABLE, clsName];
+
+    int outCount = [self enumClassProperties:cls callback:^(const char *proName, const char *bindType) {
+        [mCreateSQL appendFormat:@", '%s' '%s'", proName, bindType];
+    }];
+    
+    if (outCount > 0) {
+        [mCreateSQL appendString:@")"];
+        return mCreateSQL.copy;
+    }
+    
+    return nil;
+}
+
++ (NSDictionary *)allKeyValuesFrom:(NSObject<RTDBDefaultProtocol>*)obj {
+    NSMutableDictionary *mDic = [NSMutableDictionary dictionary];
+    
+    [self enumClassProperties:[obj class] callback:^(const char *proName, const char *bindType) {
+        NSString *propertyName = [NSString stringWithUTF8String:proName];
+        mDic[propertyName] = [obj valueForKey:propertyName];
+    }];
+    
+    if (mDic.count == 0) return nil;
+    
+    return mDic.copy;
+}
+
++ (NSString *)maxidSQLFrom:(Class)cls {
+    return [NSString stringWithFormat:kRT_SQL_FECTH_MAX_ID, [self className:cls]];
+}
+
++ (NSString *)insertSQLFromObj:(NSObject<RTDBDefaultProtocol>*)obj {
+    NSMutableArray *mPros = [NSMutableArray array];
+    
+    [self enumClassProperties:[obj class] callback:^(const char *proName, const char *bindType) {
+        [mPros addObject:[NSString stringWithUTF8String:proName]];
+    }];
+    
+    if (mPros.count == 0) {
+        return nil;
+    }
+    
+    NSString *keys = [mPros componentsJoinedByString:@", "];
+    NSString *values = [mPros componentsJoinedByString:@", :"];
+    NSString *tableName = [self className:[obj class]];
+    
+    return [NSString stringWithFormat:kRT_SQL_INSERT_OBJ, tableName, keys, values];
+}
+
+/////
++ (NSString *)updateSQLFromObj:(NSObject<RTDBDefaultProtocol>*)obj {
+    NSMutableString *mUpdateStr = [NSMutableString string];
+    
+    [self enumClassProperties:[obj class] callback:^(const char *proName, const char *bindType) {
+        [mUpdateStr appendFormat:@"%@ = ?, ", [NSString stringWithUTF8String:proName]];
+    }];
+    
+    if (mUpdateStr.length > 2) {
+        [mUpdateStr deleteCharactersInRange:NSMakeRange(mUpdateStr.length - 2, 2)];
+        id _id = [obj valueForKey:kRT_PRIMARY_PROPERTY];
+        return [NSString stringWithFormat:kRT_SQL_UPDATE_OBJ, [self className:[obj class]], mUpdateStr, _id];
+    } else return nil;
+}
+
++ (NSString *)updateSQLFromOBJ:(id)obj withArray:(NSArray <NSString *>*)proArray {
+    if (proArray.count == 1) {
+        return [NSString stringWithFormat:@"%@ = ?", proArray[0]];
+    } else {
+        NSString *keys = [[proArray componentsJoinedByString:@" = ?, "] stringByAppendingString:@" = ?"];
+        return [NSString stringWithFormat:kRT_SQL_UPDATE_OBJ, [self className:[obj class]], keys, [obj valueForKey:kRT_PRIMARY_PROPERTY]];
+    }
+}
+
++ (NSArray *)updateValuesFromOBJ:(id)obj withArray:(NSArray <NSString *>*)proArray {
+    NSMutableArray *mArrValues = [NSMutableArray arrayWithCapacity:proArray.count];
+    
+    for (int i = 0; i < proArray.count; i++) {
+        id value = [obj valueForKey:proArray[i]];
+        if (!value) {
+            value = [NSNull null];
+        }
+        [mArrValues addObject:value];
+    }
+    
+    return mArrValues.copy;
+}
+
++ (NSArray *)updateValuesFromProDict:(NSDictionary *)proDict withArray:(NSArray <NSString *>*)proArray {
+    NSMutableArray *mArrValues = [NSMutableArray arrayWithCapacity:proArray.count];
+    
+    for (int i = 0; i < proArray.count; i++) {
+        id value = proDict[proArray[i]];
+        if (!value) {
+            value = [NSNull null];
+        }
+        [mArrValues addObject:value];
+    }
+    
+    return mArrValues.copy;
+}
+//////
++ (NSString *)deleteSQLFromObj:(NSObject<RTDBDefaultProtocol>*)obj {
+    return [NSString stringWithFormat:kRT_SQL_DELETE_OBJ, [self className:[obj class]], [obj valueForKey:kRT_PRIMARY_PROPERTY]];
+}
+
++ (NSString *)fetchSQLFromClass:(Class)cls withCondition:(NSString *)condition {
+    return [NSString stringWithFormat:kRT_SQL_SELECT_TABLE, condition];
+}
+@end
+
+///////////
+///////////
+@interface RTDBDefault ()
+
 @end
 
 @implementation RTDBDefault
 
-- (instancetype)init {
-    if (self = [super init]) {
-        _semaphore = dispatch_semaphore_create(1);
-        _mDicTablesCache = [NSMutableDictionary<NSString *, RTInfo *> dictionary];
-    }
-    return self;
+- (void)setDbHandler:(RTDB *)dbHandler {
+    _dbHandler = dbHandler;
 }
 
-// Get a RTInfo object which cahced the model class info.
-- (RTInfo *)infoForClass:(Class)cls withError:(NSError *__autoreleasing*)error {
-    NSString *clsName = [NSString stringWithUTF8String:rt_class_name(cls)];
-    if (!clsName || clsName.length == 0) return nil;
-    
-    dispatch_semaphore_wait(_semaphore, dispatch_time(DISPATCH_TIME_NOW, DISPATCH_TIME_FOREVER));
-    
-    RTInfo *info = _mDicTablesCache[clsName];
-    if (!info) {
-        NSError *err;
-        info = [[RTInfo alloc] initWithClass:cls withError:&err];
-        if (!err) {
-            _mDicTablesCache[clsName] = info;
-        } else {
-            info = nil;
-            if (error != NULL) {
-                *error = err;
-            }
-        }
-    }
-    
-    dispatch_semaphore_signal(_semaphore);
-    return info;
+- (BOOL)createTable:(Class)cls {
+    return [self createTable:cls withError:nil];
 }
-#pragma mark - 
 
-- (BOOL)creatTable:(Class)cls withError:(NSError * __autoreleasing *)err {
+- (BOOL)createTable:(Class)cls withError:(NSError *__autoreleasing *)error {
+    NSString *sql = [RTClassInfo createTableSQLFromClass:cls];
     
-    RTInfo *info = [self infoForClass:cls withError:err];
-
-    if (!info) {
-        if (err != NULL && *err == nil) {
-            rt_error(@"RTDB get class info failure!", 103, err);
-        }
+    if (!sql) {
+        rt_error(@"RTDB can not find any property.", 114, error);
         return NO;
     }
     
-    return rt_sqlite3_exec([self sqlite3_db], [info createSql], err);
+    return [_dbHandler execWithQuery:sql withError:error];
 }
 
-// insert
-- (BOOL)insertObj:(id)obj withError:(NSError * __autoreleasing *)err {
-    return [self baseOperate:op_insert withObj:obj withError:err];
+// insert one row
+- (BOOL)insertObj:(NSObject<RTDBDefaultProtocol>*)obj {
+    return [self insertObj:obj withError:nil];
 }
 
-// update
-- (BOOL)updateObj:(id)obj withParams:(NSDictionary <NSString *, id>*)params withError:(NSError *__autoreleasing *)err {
+- (BOOL)insertObj:(NSObject<RTDBDefaultProtocol>*)obj withError:(NSError * __autoreleasing *)error {
     
-    if (!params && params.count == 0) {
-        return [self updateObj:obj withError:err];
-    }
-    
-    if (obj == nil) {
-        rt_error(@"RTDB recieve an empty obj!", 104, err);
-        return NO;
-    }
-    
-    NSMutableString *mSql = [NSMutableString stringWithString:[NSString stringWithFormat:@"UPDATE %s SET", rt_class_name([obj class])]];
-    
-    NSArray <NSString *>*allKeys = params.allKeys;
-    NSString *key = nil;
-    
-    for (int i = 0; i < allKeys.count; i++) {
-        key = allKeys[i];
-        [mSql appendFormat:@" %@ = ?, ", key];
-    }
-    
-    if ([mSql hasSuffix:@", "]) {
-        [mSql deleteCharactersInRange:NSMakeRange(mSql.length - 2, 2)];
-    }
-    
-    NSInteger idx = [[obj valueForKey:@"_id"] integerValue];
-    [mSql appendFormat:@" where _id = %ld", (long)idx];
-    
-    return [self exceQuery:mSql.copy withParams:params];
-}
-
-- (BOOL)updateObj:(id)obj withError:(NSError * __autoreleasing *)err {
-    return [self baseOperate:op_update withObj:obj withError:err];
-}
-
-// delete
-- (BOOL)deleteObj:(id)obj withError:(NSError * __autoreleasing *)err {
-    return [self baseOperate:op_delete withObj:obj withError:err];
-}
-
-- (BOOL)baseOperate:(RTDBOperateMode)op withObj:(id)obj withError:(NSError * __autoreleasing *)err {
-    if (obj == nil) {
-        rt_error(@"RTDB recieve an empty obj!", 104, err);
-        return NO;
-    }
-    
-    RTInfo *info = [self infoForClass:[obj class] withError:err];
-
-    if (!info) {
-        if (err != NULL && *err == nil) {
-            rt_error(@"RTDB get class info failure!", 103, err);
-        }
-        return NO;
-    }
-    
-    if (!info->_has_id) {
-        rt_error(@"RTDB can not find primety property '_id'!", 105, err);
-        return NO;
-    }
-    
-    // get max _id before insert
     NSInteger _id = -1;
-    if (op == op_insert) {
-        _id = rt_get_primary_id([self sqlite3_db], [info maxidSql], err);
-        if (_id != -1) {
-            _id++;
-        } else {
-            rt_error(@"RTDB can not find primary key '_id' max value!", 105, err);
-            return NO;
-        }
-    }
     
-    // prepare sql
-    rt_char_t *sql = NULL;
-    if (op == op_insert) {
-        sql = [info insertSql];
-    } else {
-        NSInteger idx = [[obj valueForKey:@"_id"] integerValue];
-        if (op == op_update) {
-            sql = [info updateSqlWithID:idx];
-        } else if (op == op_delete) {
-            sql = [info deleteSqlWithID:idx];
-        }
-    }
+    NSString *maxidSQL = [RTClassInfo maxidSQLFrom:[obj class]];
+    RTNext *steps = [_dbHandler execSQL:maxidSQL];
+    if (![steps stepWithError:error]) {
+        return NO;
+    };
+    _id = [steps longForColumn:0];
     
-    if (sql == NULL) {
-        rt_error(@"RTDB can not find which column to operate!", 106, err);
+    if (_id < 0) {
+        rt_error(@"RTDB can not find primary key '_id' max value!", 105, error);
         return NO;
     }
     
-    void *stmt;
-    if (!rt_sqlite3_prepare_v2([self sqlite3_db], sql, &stmt, err)) {
+    NSString *sql = [RTClassInfo insertSQLFromObj:obj];
+    NSDictionary *keyValues = [RTClassInfo allKeyValuesFrom:obj];
+    
+    if (![_dbHandler execQuery:sql withDicValues:keyValues withError:error]) {
         return NO;
     }
     
-    if (op == op_update || op == op_delete) {
-        free((char *)sql);
-    }
-    
-    // bind obj value to sqlite3
-    if (op != op_delete) {
-        rt_pro_info *proInfo = info->_prosInfo;
-        
-        for (rt_pro_info *pro = proInfo; pro != NULL; pro = pro->next) {
-            rt_sqlite3_bind(stmt, pro->idx, [obj valueForKey:[NSString stringWithUTF8String:pro->name]], pro->t);
-        }
-    }
-    
-    BOOL res = rt_sqlite3_step(stmt, err);
-    rt_sqlite3_finalize(&stmt);
-    if (!res) {
-        return NO;
-    }
-    
-    if (op == op_insert) {
-        // Assignment the maximum primary key value to the table to _id
-        [obj setValue:@(_id) forKey:@"_id"];
-    } else if (op == op_delete) {
-        [obj setValue:@(0) forKey:@"_id"];
-    }
+    [obj setValue:@(++_id) forKey:kRT_PRIMARY_PROPERTY];
     return YES;
 }
 
-- (NSArray <NSDictionary *>*)fetchSql:(NSString *)sql withError:(NSError * __autoreleasing *)err {
+// remove one row from table;
+- (BOOL)deleteObj:(NSObject<RTDBDefaultProtocol>*)obj {
+    return [self deleteObj:obj withError:nil];
+}
+- (BOOL)deleteObj:(NSObject<RTDBDefaultProtocol>*)obj withError:(NSError * __autoreleasing *)error {
     
-    NSMutableArray <NSDictionary *>*mArr = [NSMutableArray<NSDictionary *> array];
+    NSString *sql = [RTClassInfo deleteSQLFromObj:obj];
     
-    BOOL re = [self querySql:sql withError:err withCallback:^(void *stmt, Class cls, rt_pro_info *proInfo, BOOL cached, BOOL *stop) {
-        NSMutableDictionary *mDic = [NSMutableDictionary dictionary];
-        
-        
-        for (rt_pro_info *pro = proInfo; pro != NULL; pro = pro->next) {
-            rt_objc_t t;
-            if (rt_str_compare(pro->name, "_id")) {
-                t = rtlong;
-            } else if (cached) {
-                t = pro->t;
-            } else {
-                t = rt_column_type(stmt, pro->idx);
+    if ([_dbHandler execWithQuery:sql withError:error]) {
+        [obj setValue:@(0) forKey:kRT_PRIMARY_PROPERTY];
+        return YES;
+    } else return NO;
+}
+
+// update a row's all values;
+- (BOOL)updateObj:(NSObject<RTDBDefaultProtocol>*)obj {
+    return [self updateObj:obj withError:nil];
+}
+
+- (BOOL)updateObj:(NSObject<RTDBDefaultProtocol>*)obj withError:(NSError * __autoreleasing *)error {
+    NSArray *pros = [RTClassInfo classAllPros:[obj class]];
+    return [self updateObj:obj withPropertyArray:pros];
+}
+
+- (BOOL)updateObj:(NSObject<RTDBDefaultProtocol>*)obj withPropertyArray:(NSArray<NSString *>*)proArray {
+    return [self updateObj:obj withPropertyArray:proArray withError:NULL];
+}
+
+- (BOOL)updateObj:(NSObject<RTDBDefaultProtocol>*)obj withPropertyArray:(NSArray<NSString *>*)proArray withError:(NSError *_Nullable __autoreleasing *)error {
+    
+    NSString *sql = [RTClassInfo updateSQLFromOBJ:obj withArray:proArray];
+    NSArray *valuesArray = [RTClassInfo updateValuesFromOBJ:obj withArray:proArray];
+    
+    return [_dbHandler execQuery:sql withArrValues:valuesArray withError:error];
+}
+
+- (BOOL)updateObj:(NSObject<RTDBDefaultProtocol>*)obj withPropertyDict:(NSDictionary<NSString *, id>*)proDict {
+    return [self updateObj:obj withPropertyDict:proDict withError:NULL];
+}
+
+- (BOOL)updateObj:(NSObject<RTDBDefaultProtocol>*)obj withPropertyDict:(NSDictionary<NSString *, id>*)proDict withError:(NSError *_Nullable __autoreleasing *)error {
+    
+    NSArray *allKeys = proDict.allKeys;
+    
+    NSString *sql = [RTClassInfo updateSQLFromOBJ:obj withArray:allKeys];
+    NSArray *valuesArray = [RTClassInfo updateValuesFromProDict:proDict withArray:allKeys];
+    return [_dbHandler execSQL:sql withArrValues:valuesArray withError:error];
+}
+
+////////
+- (NSArray *)fetch:(Class)cls withCondition:(NSString *)condtion {
+    return [self fetch:cls withCondition:condtion withError:NULL];
+}
+
+- (NSArray *)fetch:(Class)cls withCondition:(NSString *)condtion withError:(NSError * __autoreleasing *)error {
+    
+    NSString *sql = [RTClassInfo fetchSQLFromClass:cls withCondition:condtion];
+    
+    RTNext *step = [_dbHandler execSQL:sql withError:error];
+    
+    NSMutableArray *mObjs = [NSMutableArray array];
+    __block int steping = -1;
+    __block id obj = nil;
+    
+    [step enumColumns:^(NSString * _Nullable colName, id  _Nullable colValue, int step, int colIndex, BOOL * _Nullable stop, NSError * _Nullable err) {
+        if (step > steping) {
+            obj = [[cls alloc] init];
+            if (obj) {
+                [mObjs addObject:obj];
             }
-            id value = rt_sqlite3_column(stmt, pro->idx, t);
-            NSString *name = [NSString stringWithUTF8String:pro->name];
-            mDic[name] = value;
+            steping = step;
         }
-        
-        if (mDic.count > 0) {
-            [mArr addObject:mDic.copy];
+        if (!error && colName) {
+            [obj setValue:colValue forKey:colName];
+        } else {
+            *error = err;
         }
     }];
     
-    if (re && mArr.count > 0) {
-        return mArr.copy;
+    if (mObjs.count > 0) {
+        return mObjs.copy;
     } else return nil;
 }
 
-- (NSArray *)fetchObjSql:(NSString *)sql withError:(NSError * __autoreleasing *)err {
-    NSMutableArray *mArr = [NSMutableArray array];
+- (NSArray *)fetchSQL:(NSString *)sql {
+    return [self fetchSQL:sql withError:NULL];
+}
+
+- (NSArray *)fetchSQL:(NSString *)sql withError:(NSError * __autoreleasing *)error {
     
-    BOOL re = [self querySql:sql withError:err withCallback:^(void *stmt, Class cls, rt_pro_info *proInfo, BOOL cached, BOOL *stop) {
+    RTNext *steps = [_dbHandler execSQL:sql withError:error];
+    
+    NSString *tableName = [steps tableName];
+    if (!tableName) {
+        rt_error(@"RTDB can not find a table from sql.", 111, error);
+        return nil;
+    }
+    
+    Class cls = NSClassFromString(tableName);
+    if (!cls) {
+        rt_error([NSString stringWithFormat:@"RTDB can not find a class named '%@'", tableName], 111, error);
+        return nil;
+    }
+    
+    return [self enumSteps:steps forClass:cls withError:error];
+}
+
+#pragma mark - private
+- (NSArray *)fetchClass:(Class)cls SQL:(NSString *)sql withError:(NSError * __autoreleasing *)error {
+    
+    RTNext *steps = [_dbHandler execSQL:sql withError:error];
+
+    return [self enumSteps:steps forClass:cls withError:error];
+}
+
+- (NSArray *)enumSteps:(RTNext *)steps forClass:(Class)cls withError:(NSError * __autoreleasing *)error {
+    
+    NSMutableArray *mObjs = [NSMutableArray array];
+    __block int rowing = -1;
+    __block id obj = nil;
+    [steps enumColumns:^(NSString * _Nullable colName, id  _Nullable colValue, int row, int colIndex, BOOL * _Nullable stop, NSError * _Nullable err) {
         
-        if (cls == Nil) {
-            rt_error([NSString stringWithFormat:@"RTDB did not find a class from sql: %@", sql], 103, err);
+        if (err) {
+            *error = err;
             *stop = YES;
             return;
         }
         
-        id obj = [[cls alloc] init];
-        for (rt_pro_info *pro = proInfo; pro != NULL; pro = pro->next) {
-            rt_objc_t t;
-            if (rt_str_compare(pro->name, "_id")) {
-                t = rtlong;
-            } else if (cached) {
-                t = pro->t;
-            } else {
-                t = rt_column_type(stmt, pro->idx);
+        if (row > rowing) {
+            obj = [[cls alloc] init];
+            if (obj) {
+                [mObjs addObject:obj];
             }
-            id value = rt_sqlite3_column(stmt, pro->idx, t);
-            NSString *name = [NSString stringWithUTF8String:pro->name];
-            
-            if (!name) {
-                return;
-            }
-            
-            SEL slct = [self setterFromName:name];
-            if (slct == nil) {
-                return;
-            }
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wundeclared-selector"
-            if ([obj respondsToSelector:slct]) {
-#pragma clang diagnostic pop
-                [obj setValue:value forKey:name];
-            }
+            rowing = row;
         }
-        if (obj) {
-            [mArr addObject:obj];
+        
+        if (!error && colName) {
+            [obj setValue:colValue forKey:colName];
+        } else {
+            *error = err;
         }
     }];
     
-    if (re && mArr.count > 0) {
-        return mArr.copy;
-    } else return nil;
-}
-
-- (BOOL)querySql:(NSString *)sql withError:(NSError * __autoreleasing *)err withCallback:(RT_DB_STEP_BLOCK)callback {
-    if (!sql && sql.length == 0) {
-        rt_error(@"RTDB: sql should not be empty", 101, err);
-        return NO;
-    }
-    
-    __block void *stmt;
-    if (!rt_sqlite3_prepare_v2([self sqlite3_db], [sql UTF8String], &stmt, err)) {
-        return NO;
-    }
-    
-    Class cls = rt_column_class(stmt);
-    if (cls == Nil) {
-        rt_error([NSString stringWithFormat:@"RTDB did not find class. - sql: %@", sql], 103, err);
-        rt_sqlite3_finalize(&stmt);
-        return NO;
-    }
-    
-    int count;
-    rt_pro_info *proInfo = rt_column_pro_info(stmt, &count);
-    if (proInfo == NULL) {
-        rt_error([NSString stringWithFormat:@"RTDB did not find pros info. - sql: %@", sql], 107, err);
-        rt_sqlite3_finalize(&stmt);
-        return NO;
-    }
-    
-    RTInfo *sqInfo = [self infoForClass:cls withError:nil];
-
-    BOOL cached = (rt_pro_t_assign(sqInfo->_prosInfo, &proInfo, NULL) == 1);
-    
-    int result = -1;
-    while (1) {
-        result = rt_sqlite3_step(stmt, err);
-        if (result != RT_SQLITE_ROW) break;
-        
-        if (callback) {
-            BOOL stop;
-            callback(stmt, cls, proInfo, cached, &stop);
-            if (stop) {
-                break;
-            }
-        }
-    }
-    // free
-    rt_sqlite3_finalize(&stmt);
-    rt_free_info(proInfo);
-    return (result != RT_SQLITE_ERROR);
-}
-
-// ----------------------------------------------
-// ----------------------------------------------
-// ----------------------------------------------
-- (SEL)setterFromName:(NSString *)name {
-    if (!name || name.length == 0) {
+    if (mObjs.count == 0) {
+        rt_error(@"RTDB can not find any row.", 112, error);
         return nil;
     }
-    NSString *result;
-    
-    NSUInteger len = name.length;
-    if (len == 1) {
-        result = [NSString stringWithFormat:@"set%@:", name.uppercaseString];
-    } else {
-        char first = [[name substringToIndex:1] UTF8String][0];
-        
-        NSString *sufix = [name substringFromIndex:1];
-        if (first >= 'a' && first <= 'z') {
-            first -= 32;
-        }
-        
-        result = [NSString stringWithFormat:@"set%c%@:", first, sufix];
-    }
-    return NSSelectorFromString(result);
+    return mObjs.copy;
 }
 
 @end

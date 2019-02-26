@@ -58,6 +58,6 @@
 
 // -------------
 - (void)onClose {
-    [self.db close];
+    [self.db.dbHandler close];
 }
 @end

@@ -1,76 +1,65 @@
 //
-//  RTDBDefault.h
-//  RTSQLite
+//  RTOBDB.h
+//  RTDatebase
 //
-//  Created by ENUUI on 2018/5/8.
-//  Copyright © 2018年 ENUUI. All rights reserved.
+//  Created by hc-jim on 2019/2/25.
+//  Copyright © 2019 ENUUI. All rights reserved.
 //
 
+#import <Foundation/Foundation.h>
 #import "RTDB.h"
-#import "RTInfo.h"
 
-NS_SWIFT_UNAVAILABLE("")
-@interface RTDBDefault : RTDB
+NS_ASSUME_NONNULL_BEGIN
+
+@protocol RTDBDefaultProtocol
+@property (nonatomic, assign) NSInteger _id;
+@end
+
+
+@interface RTDBDefault : NSObject
+// 装载 RTDB
+@property (nonatomic, strong) RTDB *dbHandler;
+
 /**
  Building a table based on the model class
-
- @param cls modle class for building a table. A property _id typed of integer is required
- @param err OUT: error msg
- @return Whether to perform success or not
+ 
+ cls: modle class for building a table. A property _id typed of integer is required
+ error OUT: error msg
+ return: Whether to perform success or not
  */
-- (BOOL)creatTable:(Class)cls withError:(NSError * __autoreleasing *)err;
-
+- (BOOL)createTable:(Class)cls;
+- (BOOL)createTable:(Class)cls withError:(NSError *_Nullable __autoreleasing *)error;
 
 /**
  insert
-
- @param obj the object of the class which has been build a table. If the object has not a property _id typed of integer, it will be error.
- @param err OUT: error msg
- @return Whether to perform success or not
- */
-- (BOOL)insertObj:(id)obj withError:(NSError * __autoreleasing *)err;
-
-
-/**
- update
-
- @param obj The object of the class which has been build a table. If the object has not a property _id typed of integer, it will be error.
- @param params columns To update;
- @param err OUT: error msg
- @return Whether to perform success or not
- */
-- (BOOL)updateObj:(id)obj withParams:(NSDictionary <NSString *, id>*)params withError:(NSError *__autoreleasing *)err;
-
-/**
- update
-
- @param obj The object of the class which has been build a table. If the object has not a property _id typed of integer, it will be error.
- @param err OUT: error msg
- @return Whether to perform success or not
- */
-- (BOOL)updateObj:(id)obj withError:(NSError * __autoreleasing *)err;
-
-
-/**
- delete
-
- @param obj the object of the class which has been build a table. If the object has not a property _id typed of integer, it will be error.
- @param err OUT: error msg
- @return Whether to perform success or not
- */
-- (BOOL)deleteObj:(id)obj withError:(NSError * __autoreleasing *)err;
-
-/**
- select
  
- @return Dictionary array. Each dictionary corresponds to a row of data.
+ obj: the object of the class which has been build a table. If the object has not a property _id typed of integer, it will be error.
+ error OUT: error msg
+ return: Whether to perform success or not
  */
-- (NSArray<NSDictionary *> *)fetchSql:(NSString *)sql withError:(NSError * __autoreleasing *)err;
+- (BOOL)insertObj:(NSObject<RTDBDefaultProtocol>*)obj;
+- (BOOL)insertObj:(NSObject<RTDBDefaultProtocol>*)obj withError:(NSError *_Nullable __autoreleasing *)error;
+
+// remove one row from table;
+- (BOOL)deleteObj:(NSObject<RTDBDefaultProtocol>*)obj;
+- (BOOL)deleteObj:(NSObject<RTDBDefaultProtocol>*)obj withError:(NSError *_Nullable __autoreleasing *)error;
 
 /**
- select
-
- @return Object array. Object's type depend on the table name in the paramter sql.
+ update
+ 
+ @param obj The object of the class which has been build a table. If the object has not a property _id typed of integer, it will be error.
  */
-- (NSArray *)fetchObjSql:(NSString *)sql withError:(NSError * __autoreleasing *)err;
+- (BOOL)updateObj:(NSObject<RTDBDefaultProtocol>*)obj;
+- (BOOL)updateObj:(NSObject<RTDBDefaultProtocol>*)obj withError:(NSError *_Nullable __autoreleasing *)error;
+- (BOOL)updateObj:(NSObject<RTDBDefaultProtocol>*)obj withPropertyArray:(NSArray<NSString *>*)proArray;
+- (BOOL)updateObj:(NSObject<RTDBDefaultProtocol>*)obj withPropertyArray:(NSArray<NSString *>*)proArray withError:(NSError *_Nullable __autoreleasing *)error;
+- (BOOL)updateObj:(NSObject<RTDBDefaultProtocol>*)obj withPropertyDict:(NSDictionary<NSString *, id>*)proDict;
+- (BOOL)updateObj:(NSObject<RTDBDefaultProtocol>*)obj withPropertyDict:(NSDictionary<NSString *, id>*)proDict withError:(NSError *_Nullable __autoreleasing *)error;
+
+////////
+- (NSArray *)fetch:(Class)cls withCondition:(NSString *)condtion;
+- (NSArray *)fetch:(Class)cls withCondition:(NSString *)condtion withError:(NSError *_Nullable __autoreleasing *)error;
+
+- (NSArray *)fetchSQL:(NSString *)sql withError:(NSError *_Nullable __autoreleasing *)error;
 @end
+NS_ASSUME_NONNULL_END

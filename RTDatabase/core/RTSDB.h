@@ -8,7 +8,6 @@
 
 #import "RTSDBExtra.h"
 
-
 typedef void(^RTQueueBlock)(RTSDBExtra *dber);
 NS_SWIFT_UNAVAILABLE("")
 @interface RTSDB : NSObject

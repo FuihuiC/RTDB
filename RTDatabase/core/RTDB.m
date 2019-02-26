@@ -1,288 +1,456 @@
 //
 //  RTDB.m
-//  RTSQLite
+//  RTDatebase
 //
-//  Created by ENUUI on 2018/5/3.
-//  Copyright © 2018年 ENUUI. All rights reserved.
+//  Created by hc-jim on 2019/2/25.
+//  Copyright © 2019 ENUUI. All rights reserved.
 //
 
 #import "RTDB.h"
+#import <sqlite3.h>
+#import <objc/runtime.h>
 
-@interface RTDB (){
-    void *_db;
+
+#ifndef RT_DELog
+#   ifdef DEBUG
+#    define RT_DELog(fmt, ...) NSLog((@"%s [Line %d] " fmt), __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__);
+#   else
+#       define RT_DELog(...)
+#   endif
+#endif
+
+const int baseCode = 10000;
+
+void rt_error(NSString *errMsg, int code, NSError **err) {
+    if (errMsg == nil) errMsg = @"Unknown err!";
+    
+    if (err == NULL) return;
+    
+    *err = [NSError errorWithDomain:NSCocoaErrorDomain code:code userInfo:@{NSLocalizedDescriptionKey: errMsg}];
+}
+
+// sqlite3 error handle
+void rt_sqlite3_err(int result, NSError **err) {
+    NSString *errMsg;
+    if (@available(iOS 8.2, *)) {
+        errMsg = [NSString stringWithUTF8String:sqlite3_errstr(result)];
+
+    } else {
+        errMsg = [NSString stringWithFormat:@"sqlite3 error code: %d", result];
+    }
+    int code = baseCode + result;
+    
+    rt_error(errMsg, code, err);
+}
+// -----------------------
+
+static int rt_str_compare(const char *src1, const char *src2) {
+    return (strcmp(src1, src2) == 0);
+}
+
+static rt_objc_t rt_object_class_type(id obj) {
+    if (!obj || [obj isKindOfClass:[NSNull class]]) {
+        return '0';
+    }
+    
+    rt_objc_t t = '0';
+    const char *clsName = class_getName([obj class]);
+    
+    if (rt_str_compare(clsName, "NSTaggedPointerString")
+        || rt_str_compare(clsName, "__NSCFConstantString")
+        ) {
+        t = rttext;
+    } else if (rt_str_compare(clsName, "NSConcreteMutableData")
+               || rt_str_compare(clsName, "_NSInlineData")
+               ) {
+        t = rtblob;
+    } else if (rt_str_compare(clsName, "__NSDate")) {
+        t = rtdate;
+    } else if (rt_str_compare(clsName, "__NSCFBoolean")) {
+        t = rtbool;
+    } else if (rt_str_compare(clsName, "__NSCFNumber")) {
+        if (rt_str_compare([obj objCType], @encode(char))) {
+            t = rtchar;
+        } else if (rt_str_compare([obj objCType], @encode(unsigned char))) {
+            t = rtuchar;
+        } else if (rt_str_compare([obj objCType], @encode(short))) {
+            t = rtshort;
+        } else if (rt_str_compare([obj objCType], @encode(unsigned short))) {
+            t = rtushort;
+        } else if (rt_str_compare([obj objCType], @encode(int))) {
+            t = rtint;
+        } else if (rt_str_compare([obj objCType], @encode(unsigned int))) {
+            t = rtuint;
+        } else if (rt_str_compare([obj objCType], @encode(long))) {
+            t = rtlong;
+        } else if (rt_str_compare([obj objCType], @encode(unsigned long))) {
+            t = rtulong;
+        } else if (rt_str_compare([obj objCType], @encode(long long))) {
+            t = rtlong;
+        } else if (rt_str_compare([obj objCType], @encode(unsigned long long))) {
+            t = rtulong;
+        } else if (rt_str_compare([obj objCType], @encode(float))) {
+            t = rtfloat;
+        } else if (rt_str_compare([obj objCType], @encode(double))) {
+            t = rtdouble;
+        }
+    }
+    return t;
+}
+
+// sqlite3_bind
+static int rt_sqlite3_bind(void *pstmt, int idx, id value, rt_objc_t objT) {
+    int result = -1;
+    sqlite3_stmt *stmt = (sqlite3_stmt *)pstmt;
+    if (!value || (NSNull *)value == [NSNull null]) {
+        result = sqlite3_bind_null(stmt, idx);
+    } else {
+        switch (objT) {
+            case rttext:
+                result = sqlite3_bind_text(stmt, idx, [value description].UTF8String, -1, SQLITE_STATIC);
+                break;
+            case rtblob: {
+                const void *bytes = [value bytes];
+                result = sqlite3_bind_blob(stmt, idx, bytes, (int)[value length], SQLITE_STATIC);
+            }
+                break;
+            case rtnumber: {
+                result = sqlite3_bind_double(stmt, idx, [value doubleValue]);
+            }
+                break;
+            case rtfloat:
+                result = sqlite3_bind_double(stmt, idx, [value floatValue]);
+                break;
+            case rtdouble:
+                result = sqlite3_bind_double(stmt, idx, [value doubleValue]);
+                break;
+            case rtdate: {
+                double dvalue = [value timeIntervalSince1970];
+                result = sqlite3_bind_double(stmt, idx, dvalue);
+            }
+                break;
+            case rtchar:
+                result = sqlite3_bind_int(stmt, idx, [value charValue]);
+                break;
+            case rtuchar:
+                result = sqlite3_bind_int(stmt, idx, [value unsignedCharValue]);
+                break;
+            case rtshort:
+                result = sqlite3_bind_int(stmt, idx, [value shortValue]);
+                break;
+            case rtushort:
+                result = sqlite3_bind_int(stmt, idx, [value unsignedShortValue]);
+                break;
+            case rtint:
+                result = sqlite3_bind_int(stmt, idx, [value intValue]);
+                break;
+            case rtuint:
+                result = sqlite3_bind_int64(stmt, idx, (long long)[value unsignedIntValue]);
+                break;
+            case rtlong:
+                result = sqlite3_bind_int64(stmt, idx, [value longLongValue]);
+                break;
+            case rtulong:
+                result = sqlite3_bind_int64(stmt, idx, (long long)[value unsignedLongLongValue]);
+                break;
+            case rtbool:
+                result = sqlite3_bind_int(stmt, idx, ([value boolValue] ? 1 : 0));
+                break;
+            default:
+                result = sqlite3_bind_text(stmt, idx, [[value description] UTF8String], -1, SQLITE_STATIC);
+                break;
+        }
+    }
+    return result;
+}
+
+// -------
+static void rt_sqlite3_finalize(void *stmt) {
+    if (stmt == NULL) return;
+    
+    sqlite3_finalize(stmt);
+    stmt = 0x00;
+}
+
+@interface RTDB () {
+    sqlite3 *_db;
 }
 @end
 
+
 @implementation RTDB
-
-- (void *)sqlite3_db {
-    return self->_db;
-}
-
-- (BOOL)close {
-    BOOL suc = rt_sqlite3_close(_db);
-    if (suc) {
-        _db = nil;
-    }
-    return suc;
-}
-
-#pragma mark -
+#pragma mark - open/close db
 - (BOOL)openWithPath:(NSString *)path withError:(NSError *__autoreleasing *)error {
-    NSAssert(path, @"DB path should not be empty!");
+    // open. create if not exit.
+    // readwrite
+    // sync
+    int flags = SQLITE_OPEN_CREATE | SQLITE_OPEN_READWRITE | SQLITE_OPEN_FULLMUTEX | SQLITE_OPEN_SHAREDCACHE;
     
-    int flags = RT_SQLITE_OPEN_CREATE | RT_SQLITE_OPEN_READWRITE | RT_SQLITE_OPEN_FULLMUTEX | RT_SQLITE_OPEN_SHAREDCACHE;
-    return rt_sqlite3_open(&_db, path, flags, error);
+    return [self openWithPath:path withFlags:flags withError:error];
 }
 
 - (BOOL)openWithPath:(NSString *)path withFlags:(int)flags withError:(NSError *__autoreleasing *)error {
-    return rt_sqlite3_open(&_db, path, flags, error);
+    int re = sqlite3_open_v2(path.UTF8String, &_db, flags, NULL);
+    
+    if (re != SQLITE_OK) {
+        rt_sqlite3_err(re, error);
+        return NO;
+    }
+    return YES;
 }
 
-#pragma mark - PUBLIC
+- (BOOL)close {
+    if (_db == NULL) {
+        return YES;
+    }
+    
+    int result;
+    bool retry;
+    bool closedStmt = false;
+    
+    do {
+        retry = false;
+        result = sqlite3_close(_db);
+        if (result == SQLITE_BUSY || result == SQLITE_LOCKED) {
+            if (!closedStmt) {
+                sqlite3_stmt *stmt;
+                while ((stmt = sqlite3_next_stmt(_db, nil)) != 0) {
+                    sqlite3_finalize(stmt);
+                    closedStmt = true;
+                }
+            }
+        }
+    } while (retry);
+    
+    _db = nil;
+    
+    return closedStmt;
+}
 
+#pragma mark -
+/**
+ * Execute the SQL statement and return if it is successful
+ * If you select the (withError:) method and pass in (NSError **) err, the error message is transmitted when the execution fails.
+ * Select the appropriate method according to the different parameters outside the SQL statement.
+ */
 - (BOOL)execWithQuery:(NSString *)sql {
-    return [self execQuery:sql withErr:NULL withParams:nil withArrArgs:nil withArgs:nil];
+    return [self execWithQuery:sql withError:nil];
 }
 
 - (BOOL)execWithQuery:(NSString *)sql withError:(NSError *__autoreleasing *)err {
-    return [self execQuery:sql withErr:err withParams:nil withArrArgs:nil withArgs:nil];
+    return [self execQuery:sql withDicValues:nil withArrValues:nil withListValues:NULL withError:err];
 }
 
 - (BOOL)execQuery:(NSString *)sql, ... NS_REQUIRES_NIL_TERMINATION {
-    va_list args;
-    va_start(args, sql);
-    BOOL result = [self execQuery:sql withErr:NULL withParams:nil withArrArgs:nil withArgs:args];
-    va_end(args);
-    return result;
-}
-
-- (BOOL)exceWithError:(NSError *__autoreleasing *)err withQuery:(NSString *)sql, ... NS_REQUIRES_NIL_TERMINATION {
-    va_list args;
-    va_start(args, sql);
-    BOOL result = [self execQuery:sql withErr:err withParams:nil withArrArgs:nil withArgs:args];
-    va_end(args);
-    return result;
-}
-
-- (BOOL)exceQuery:(NSString *)sql withArrArgs:(NSArray *)arrArgs {
-    return [self execQuery:sql withErr:NULL withParams:nil withArrArgs:arrArgs withArgs:nil];
-}
-
-- (BOOL)exceQuery:(NSString *)sql withArrArgs:(NSArray *)arrArgs withError:(NSError *__autoreleasing *)err {
-    return [self execQuery:sql withErr:err withParams:nil withArrArgs:arrArgs withArgs:nil];
-}
-
-- (BOOL)exceQuery:(NSString *)sql withParams:(NSDictionary *)params {
-    return [self execQuery:sql withErr:NULL withParams:params withArrArgs:nil withArgs:nil];
-}
-
-- (BOOL)exceQuery:(NSString *)sql withParams:(NSDictionary *)params withError:(NSError *__autoreleasing *)err {
-    return [self execQuery:sql withErr:err withParams:params withArrArgs:nil withArgs:nil];
-}
-
-// ----------------
-- (RTNext *)execWithSql:(NSString *)sql {
-    return [self execSql:sql withParams:nil withArrArgs:nil withArgs:nil withError:NULL];
-}
-
-- (RTNext *)execWithSql:(NSString *)sql withError:(NSError *__autoreleasing *)err {
-    return [self execSql:sql withParams:nil withArrArgs:nil withArgs:nil withError:err];
-}
-
-- (RTNext *)execSql:(NSString *)sql, ... NS_REQUIRES_NIL_TERMINATION {
-    va_list args;
-    va_start(args, sql);
-    RTNext *next = [self execSql:sql withParams:nil withArrArgs:nil withArgs:args withError:NULL];
-    va_end(args);
+    va_list ap;
+    va_start(ap, sql);
     
-    return next;
-}
-
-- (RTNext *)execWithError:(NSError *__autoreleasing *)err withSql:(NSString *)sql, ... NS_REQUIRES_NIL_TERMINATION {
+    BOOL re = [self execQuery:sql withDicValues:nil withArrValues:nil withListValues:ap withError:nil];
     
-    va_list args;
-    va_start(args, sql);
-    RTNext *next = [self execSql:sql withParams:nil withArrArgs:nil withArgs:args withError:err];
-    va_end(args);
+    va_end(ap);
+    return re;
+}
+
+- (BOOL)execWithError:(NSError *__autoreleasing *)err withQuery:(NSString *)sql, ... NS_REQUIRES_NIL_TERMINATION {
+    va_list ap;
+    va_start(ap, sql);
     
-    return next;
-}
-
-- (RTNext *)execSql:(NSString *)sql withArrArgs:(NSArray *)arrArgs {
-    return [self execSql:sql withParams:nil withArrArgs:arrArgs withArgs:nil  withError:NULL];
-}
-
-- (RTNext *)execSql:(NSString *)sql withArrArgs:(NSArray *)arrArgs withError:(NSError *__autoreleasing *)err {
-    return [self execSql:sql withParams:nil withArrArgs:arrArgs withArgs:nil  withError:err];
-}
-
-- (RTNext *)execSql:(NSString *)sql withParams:(NSDictionary *)params {
-    return [self execSql:sql withParams:params withArrArgs:nil withArgs:nil withError:NULL];
-}
-
-- (RTNext *)execSql:(NSString *)sql withParams:(NSDictionary *)params withError:(NSError *__autoreleasing *)err {
+    BOOL re = [self execQuery:sql withDicValues:nil withArrValues:nil withListValues:ap withError:err];
     
-    return [self execSql:sql withParams:params withArrArgs:nil withArgs:nil  withError:err];
+    va_end(ap);
+    return re;
 }
 
+- (BOOL)exceQuery:(NSString *)sql withArrValues:(NSArray *)arrValues {
+    return [self execQuery:sql withArrValues:arrValues withError:nil];
+}
+
+- (BOOL)execQuery:(NSString *)sql withArrValues:(NSArray *)arrValues withError:(NSError *__autoreleasing *)err {
+    
+    return [self execQuery:sql withDicValues:nil withArrValues:arrValues withListValues:NULL withError:err];
+}
+
+- (BOOL)execQuery:(NSString *)sql withDicValues:(NSDictionary *)dicValues {
+    return [self execQuery:sql withDicValues:dicValues withError:nil];
+}
+
+- (BOOL)execQuery:(NSString *)sql withDicValues:(NSDictionary *)dicValues withError:(NSError *__autoreleasing *)err {
+    return [self execQuery:sql withDicValues:dicValues withArrValues:nil withListValues:NULL withError:err];
+}
 
 #pragma mark -
-- (BOOL)execQuery:(NSString *)sql
-          withErr:(NSError *__autoreleasing *)err
-       withParams:(NSDictionary *)params
-      withArrArgs:(NSArray *)arrArgs
-         withArgs:(va_list)args {
-    
-    RTNext *next = [self execSql:sql withParams:params withArrArgs:arrArgs withArgs:args withError:err];
-
-    
-    if (!next) {
-        return NO;
-    }
-    [next stepWithError:err];
-    
-    if (err != NULL && *err != nil) {
-        return NO;
-    } else return YES;
+/**
+ * Execute the SQL statement and return an object of RTNext. For details, please see RTNext class.
+ * If you select the (withError:) method and pass in (NSError **) err, the error message is transmitted when the execution fails.
+ * Select the appropriate method according to the different parameters outside the SQL statement.
+ */
+- (RTNext *)execSQL:(NSString *)sql {
+    return [self execSQL:sql withError:nil];
 }
 
-- (RTNext *)execSql:(NSString *)sql
-         withParams:(NSDictionary *)params
-        withArrArgs:(NSArray *)arrArgs
-           withArgs:(va_list)args
-          withError:(NSError *__autoreleasing *)err {
+- (RTNext *)execSQL:(NSString *)sql withError:(NSError *__autoreleasing *)err {
+    return [self execSQL:sql withDicValues:nil withArrValues:nil withListValues:NULL withError:err];
+}
+
+//
+- (RTNext *)execSQL:(NSString *)sql
+       withDicValues:(NSDictionary *)dicValues {
+    return [self execSQL:sql withDicValues:dicValues withError:nil];
+}
+
+- (RTNext *)execSQL:(NSString *)sql
+       withDicValues:(NSDictionary *)dicValues
+           withError:(NSError *__autoreleasing *)error {
+    return [self execSQL:sql withDicValues:dicValues withArrValues:nil withListValues:NULL withError:error];
+}
+
+//
+- (RTNext *)execSQL:(NSString *)sql
+       withArrValues:(NSArray *)arrValues {
+    return [self execSQL:sql withArrValues:arrValues withError:nil];
+}
+
+- (RTNext *)execSQL:(NSString *)sql
+       withArrValues:(NSArray *)arrValues
+           withError:(NSError *__autoreleasing *)error {
+    return [self execSQL:sql withDicValues:nil withArrValues:arrValues withListValues:NULL withError:error];
+}
+
+//
+- (RTNext *)execSQLWithArgs:(NSString *)sql, ... NS_REQUIRES_NIL_TERMINATION {
+    va_list ap;
+    va_start(ap, sql);
+
+    RTNext *steps = [self execSQL:sql withDicValues:nil withArrValues:nil withListValues:ap withError:nil];
+    va_end(ap);
     
-    DELog(@"RTDB: -sql: %@", sql);
+    return steps;
+}
+
+- (RTNext *)execSQLWithError:(NSError *__autoreleasing *)error
+      withArgs:(NSString *)sql, ... NS_REQUIRES_NIL_TERMINATION {
+    va_list ap;
+    va_start(ap, sql);
     
-    if (!sql || sql.length == 0) {
-        rt_error([NSString stringWithFormat:@"RTDB: empty sql!"], 101, err);
-        return nil;
-    }
+    RTNext *steps = [self execSQL:sql withDicValues:nil withArrValues:nil withListValues:ap withError:error];
+    va_end(ap);
     
-    BOOL isInsert = [self isInserSql:sql];
-    if (isInsert && params && params.count > 0) {
-        sql = [self formatSql:sql];
-    }
+    return steps;
+}
+#pragma mark -
+- (BOOL)execQuery:(NSString *)sql
+    withDicValues:(NSDictionary *)dicValues
+    withArrValues:(NSArray *)arrValues
+   withListValues:(va_list)listValues
+        withError:(NSError *__autoreleasing *)error {
     
-    void *stmt;
-    if (!rt_sqlite3_prepare_v2(_db, [sql UTF8String], &stmt, err)) {
-        return nil;
-    };
-    int bindcount = rt_sqlite3_bind_parameter_count(stmt);
+    [[self execSQL:sql withDicValues:dicValues withArrValues:arrValues withListValues:listValues withError:error] stepWithError:error];
+    return error == NULL;
+}
+
+- (RTNext *)execSQL:(NSString *)sql
+       withDicValues:(NSDictionary *)dicValues
+       withArrValues:(NSArray *)arrValues
+      withListValues:(va_list)listValues
+           withError:(NSError *__autoreleasing *)error {
     
-    NSMutableArray *mArrArgs;
-    if (arrArgs && arrArgs.count > 0) { // NSArray
-        mArrArgs = [NSMutableArray arrayWithArray:arrArgs];
-    } else if (args) {  // va_list
-        mArrArgs = [NSMutableArray arrayWithCapacity:bindcount];
-        id v;
-        for (int i = 0; i < bindcount; i++) {
-            v = va_arg(args, id);
-            if (v) {
-                [mArrArgs addObject:v];
-            }
+    sqlite3_stmt *stmt = [self prepareStmt:sql withError:error];
+    
+    if (dicValues || arrValues || listValues != NULL) {
+        if (![self bindStmt:stmt withDicValues:dicValues withArrValues:arrValues withListValues:listValues withError:error]) {
+            return nil;
         }
     }
     
-    // bind data to sqilte
+    return [RTNext stepsWithStmt:stmt withSQL:sql];
+}
+
+#pragma mark -
+// prepare
+- (void *)prepareStmt:(NSString *)sql
+            withError:(NSError *__autoreleasing *)err {
+    RT_DELog(@"RTDB: -sql: %@", sql);
+    
+    if (!sql || sql.length == 0) {
+        rt_error([NSString stringWithFormat:@"RTDB: empty sql!"], 101, err);
+    }
+    
+    sqlite3_stmt *stmt;
+    int re = sqlite3_prepare_v2(_db, sql.UTF8String, -1, &stmt, 0);
+    
+    if (re != SQLITE_OK) {
+        rt_sqlite3_err(re, err);
+        return NULL;
+    }
+    return stmt;
+}
+
+// bind
+- (BOOL)bindStmt:(sqlite3_stmt *)stmt
+   withDicValues:(NSDictionary *)dicValues
+   withArrValues:(NSArray *)arrValues
+  withListValues:(va_list)listValues
+       withError:(NSError *__autoreleasing *)err {
+    
+    int bindCount = sqlite3_bind_parameter_count(stmt);
+    
+    NSMutableArray *mValues;
+    if (arrValues && arrValues.count > 0) {
+        
+        mValues = arrValues.mutableCopy;
+    } else if (listValues != NULL) {
+        
+        mValues = [NSMutableArray arrayWithCapacity:bindCount];
+        for (id v = va_arg(listValues, id); v != nil; v = va_arg(listValues, id)) {
+            [mValues addObject:v];
+        }
+    }
+    
+    BOOL result = YES;
     int boundCount = 0;
-    if (mArrArgs && mArrArgs.count > 0) {
-        for (int i = 0; i < mArrArgs.count; i++) {
-            id value = mArrArgs[i];
+    if (mValues && mValues.count > 0) {
+        for (int i = 0; i < mValues.count; i++) {
+            id value = mValues[i];
             rt_objc_t t = rt_object_class_type(value);
             
-            int re = rt_sqlite3_bind(stmt, i + 1, value, t);
-            if (rt_sqlite3_status_code(re) != RT_SQLITE_OK) {
+            int re = rt_sqlite3_bind(stmt, i+1, value, t);
+            if (re != SQLITE_OK) {
                 rt_sqlite3_err(re, err);
+                result = NO;
                 break;
             }
             boundCount++;
         }
-    } else if (params && params.count > 0) {
+    } else if (dicValues && dicValues.count > 0) {
         
-        NSArray *arrKeys = params.allKeys;
-
-        for (int i = 0; i < arrKeys.count; i++) {
-            NSString *dickey = arrKeys[i];
-            id value = params[dickey];
-            rt_objc_t t = rt_object_class_type(value);
-            int idx = i + 1;
-            if (isInsert) {
-                NSString *key = [@":" stringByAppendingString:dickey];
-                
-                idx = rt_sqlite3_bind_param_index(stmt, [key UTF8String]);
-                
-                if (idx == 0) {
-                    rt_error([NSString stringWithFormat:@"RTDB can not find a param for key: %@. -sql: %@", dickey, sql], 102, err);
-                    break;
-                }
+        for (NSString *key in dicValues) {
+            id value = dicValues[key];
+            
+            int idx = sqlite3_bind_parameter_index(stmt, [NSString stringWithFormat:@":%@", key].UTF8String);
+            
+            if (idx > 0) {
+                rt_sqlite3_bind(stmt, idx, value, rt_object_class_type(value));
+                boundCount++;
+            } else {
+                rt_error([NSString stringWithFormat:@"RTDB can not find a param for key: %@.", key], 102, err);
+                result = NO;
+                break;
             }
-            rt_sqlite3_bind(stmt, idx, value, t);
-            boundCount++;
         }
     }
     
-    if (boundCount != bindcount) {
+    if (result && (boundCount != bindCount)) {
         if (err != NULL && !(*err)) { // if no errmsg, build.
             rt_error(@"RTDB recieved sql paramters count is not equal to args for bind!", 102, err);
         }
-        
-        rt_sqlite3_finalize(&stmt);
-        return nil;
+        result = NO;
     }
     
-    RTNext *next = [[RTNext alloc] initWithStmt:stmt withSql:sql];
-    
-    return next;
-}
-
-- (BOOL)isInserSql:(NSString *)sql {
-    NSString *lowerSql = [sql lowercaseString];
-    return [lowerSql containsString:@"insert"];
-}
-
-// format sql: INSERT INTO *** (name1, name2, ...) VALUES (:name1, :name2, ...)
-- (NSString *)formatSql:(NSString *)sql {
-
-    BOOL sqlT = [sql containsString:@":"];
-    NSString *sql_format = sql;
-    if (!sqlT) {
-        NSArray <NSString *>*subStrings = [sql componentsSeparatedByString:@"("];
-        if (subStrings.count < 2) {
-            return sql_format;
-        }
-        
-        NSString *sqlPrefix = subStrings.firstObject;
-        NSString *strColumns = [subStrings[1] componentsSeparatedByString:@")"].firstObject;
-        if (!strColumns || strColumns.length == 0) {
-            return sql_format;
-        }
-        
-        sqlPrefix = [sqlPrefix stringByAppendingFormat:@"(%@) VALUES (:", strColumns];
-        strColumns = [strColumns stringByReplacingOccurrencesOfString:@" " withString:@""];
-        
-        NSArray *arrColumns = [strColumns componentsSeparatedByString:@","];
-        
-        NSString *sqlValues = [arrColumns componentsJoinedByString:@", :"];
-        
-        sql_format = [sqlPrefix stringByAppendingFormat:@"%@)", sqlValues];
-
-        DELog(@"sql_format = %@", sql_format);
+    if (!result) {
+        rt_sqlite3_finalize(stmt);
     }
-    return sql_format;
+    
+    return result;
 }
 
-// --------------------------------------
-- (BOOL)begin {
-    return [self execQuery:@"BEGIN", nil];
-}
-
-- (BOOL)commit {
-    return [self execQuery:@"COMMIT", nil];
-}
-
-- (BOOL)rollback {
-    return [self execQuery:@"ROLLBACK", nil];
-}
 @end

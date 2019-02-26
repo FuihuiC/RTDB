@@ -7,8 +7,6 @@
 //
 
 #import "PPColumns.h"
-#import "RTPreset.h"
-
 
 @interface PPColumns ()
 

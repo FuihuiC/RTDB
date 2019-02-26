@@ -161,9 +161,8 @@ typedef void(^rt_block_t)(void);
 - (void (^)(rt_step_block_t))lockOnEnum {
     return ^(rt_step_block_t b) {
         __block NSError *error;
-        [self.next enumAllSteps:^(NSDictionary *dic, int step, BOOL *stop, NSError *err) {
-            error = err;
-            if (!err) b(dic, step, stop);
+        [self.next enumRows:^(NSDictionary * _Nullable rowDict, int row, BOOL * _Nullable stop, NSError * _Nullable error) {
+            if (!error) b(rowDict, row, stop);
         }];
         
         self.err = error;
@@ -171,11 +170,11 @@ typedef void(^rt_block_t)(void);
 }
 #pragma mark -
 
-- (RTSDBExtra *(^)(NSString *))onOpen {
-    return ^(NSString *path) {
-        return self.onOpenFlags(path, RT_SQLITE_OPEN_CREATE | RT_SQLITE_OPEN_READWRITE | RT_SQLITE_OPEN_FULLMUTEX | RT_SQLITE_OPEN_SHAREDCACHE);
-    };
-}
+//- (RTSDBExtra *(^)(NSString *))onOpen {
+//    return ^(NSString *path) {
+//        return self.onOpenFlags(path, SQLITE_OPEN_CREATE | SQLITE_OPEN_READWRITE | RT_SQLITE_OPEN_FULLMUTEX | RT_SQLITE_OPEN_SHAREDCACHE);
+//    };
+//}
 
 - (RTSDBExtra *(^)(NSString *, int))onOpenFlags {
     
@@ -189,7 +188,7 @@ typedef void(^rt_block_t)(void);
 - (void)openDB:(NSString *)path withFlags:(int)flags {
     
     NSError *err;
-    [self.dbManager openWithPath:path withFlags:flags withError:&err];
+    [self.dbManager.dbHandler openWithPath:path withFlags:flags withError:&err];
     self.err = err;
 }
 
@@ -237,8 +236,7 @@ typedef void(^rt_block_t)(void);
     }
     
     NSError *err = NULL;
-    
-    RTNext *next = [self.dbManager execSql:sql withParams:params withArrArgs:arrArgs withArgs:(self->_args != NULL) ? *(self->_args) : NULL withError:&err];
+    RTNext *next = [self.dbManager.dbHandler execSQL:sql withDicValues:params withArrValues:arrArgs withListValues:(self->_args != NULL) ? *(self->_args) : NULL withError:&err];
     
     self.next = next;
     if (self->_args != NULL) {
@@ -261,7 +259,7 @@ typedef void(^rt_block_t)(void);
 - (void)tableCreat:(Class)cls {
     
     NSError *err;
-    [self.dbManager creatTable:cls withError:&err];
+    [self.dbManager createTable:cls withError:&err];
     self.err = err;
 }
 
@@ -308,7 +306,7 @@ typedef void(^rt_block_t)(void);
 - (void)updateObj:(id)obj withParams:(NSDictionary<NSString *,id> *)params {
     
     NSError *err;
-    [self.dbManager updateObj:obj withParams:params withError:&err];
+    [self.dbManager updateObj:obj withPropertyDict:params withError:&err];
     self.err = err;
 }
 // delete
@@ -330,7 +328,8 @@ typedef void(^rt_block_t)(void);
 - (NSArray <NSDictionary *>*)selectDics:(NSString *)sql {
     
     NSError *err;
-    NSArray <NSDictionary *>* results = [self.dbManager fetchSql:sql withError:&err];
+    NSArray <NSDictionary *>* results = [self.dbManager fetchSQL:sql withError:&err];
+
     self.err = err;
     
     return results;
@@ -360,11 +359,12 @@ typedef void(^rt_block_t)(void);
                 if (!self.next) return;
                 
                 NSMutableArray *mArrResult = [NSMutableArray array];
-                [self.next enumAllSteps:^(NSDictionary *dic, int step, BOOL *stop, NSError *err) {
-                    if (dic) {
-                        [mArrResult addObject:dic];
+                [self.next enumRows:^(NSDictionary * _Nullable rowDict, int row, BOOL * _Nullable stop, NSError * _Nullable error) {
+                    if (rowDict) {
+                        [mArrResult addObject:rowDict];
                     }
                 }];
+               
                 if (mArrResult.count > 0) {
                     self.arrResult = mArrResult.copy;
                 }
@@ -400,7 +400,8 @@ typedef void(^rt_block_t)(void);
     NSArray <NSDictionary *>* results;
     NSError *err;
     _isObjcMode = YES;
-    results = [self.dbManager fetchObjSql:sql withError:&err];
+    results = [self.dbManager fetchSQL:sql withError:&err];
+    
     self.err = err;
     return results;
 }
@@ -413,14 +414,14 @@ typedef void(^rt_block_t)(void);
         NSAssert(block != NULL, @"RTDB: - The block while transacting can not be NULL.");
         
         return self.onRun(^(){
-            [self.dbManager begin];
+            [self.dbManager.dbHandler execWithQuery:@"BEGIN"];
             @try {
                 block();
             } @catch (NSException *exception) {
-                [self.dbManager rollback];
+                [self.dbManager.dbHandler execWithQuery:@"ROLLBACK"];
                 [self extraError:@"Transaction failed!" withCode:110];
             }
-            [self.dbManager commit];
+            [self.dbManager.dbHandler execWithQuery:@"COMMIT"];
         });
     };
 }
@@ -441,7 +442,7 @@ typedef void(^rt_block_t)(void);
 - (RTSDBExtra *)onBegin {
     return self.onRun(^{
         self.rollback = NO;
-        [self.dbManager begin];
+        [self.dbManager.dbHandler execWithQuery:@"BEGIN"];
     });
 }
 
@@ -450,7 +451,7 @@ typedef void(^rt_block_t)(void);
         return self;
     }
     return self.onRun(^{
-        [self.dbManager commit];
+        [self.dbManager.dbHandler execWithQuery:@"COMMIT"];
     });
 }
 
@@ -459,7 +460,7 @@ typedef void(^rt_block_t)(void);
         return self;
     }
     return self.onRun(^{
-        [self.dbManager rollback];
+        [self.dbManager.dbHandler execWithQuery:@"ROLLBACK"];
     });
 }
 @end
